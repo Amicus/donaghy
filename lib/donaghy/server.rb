@@ -1,8 +1,5 @@
 module Donaghy
   class Server
-
-    ROOT_QUEUE = "global_event"
-
     attr_reader :manager, :poller
     attr_accessor :queues
     def initialize(opts = {})

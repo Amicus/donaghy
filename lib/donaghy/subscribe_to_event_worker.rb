@@ -1,6 +1,7 @@
 module Donaghy
   class SubscribeToEventWorker
     include Sidekiq::Worker
+    sidekiq_options :queue => ROOT_QUEUE
 
     def perform(event_path, queue, class_name)
       Donaghy.redis.with_connection do |redis|

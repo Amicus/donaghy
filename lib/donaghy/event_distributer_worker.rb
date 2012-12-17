@@ -1,18 +1,24 @@
 module Donaghy
 
-  #   Sidekiq::Client.push('queue' => 'my_queue', 'class' => MyWorker, 'args' => ['foo', 1, :bat => 'bar'])
-
-
   class EventDistributerWorker
     include Sidekiq::Worker
 
+    sidekiq_options :queue => ROOT_QUEUE
+
     def perform(path, event_hash)
+      logger.info("received to #{path}, #{event_hash.inspect}")
+
       queues_and_classes = QueueFinder.new(path).find
+
       queues_and_classes.each do |queue_and_class|
-        Sidekiq.push('queue' => queue_and_class[:queue], 'class' => queue_and_class[:klass], 'args' => event_hash)
+        logger.info("sending to #{queue_and_class.inspect}")
+        Sidekiq::Client.push('queue' => queue_and_class[:queue], 'class' => queue_and_class[:class_name], 'args' => event_hash)
       end
     end
 
+    def logger
+      Sidekiq.logger
+    end
 
   end
 

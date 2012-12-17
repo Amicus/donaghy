@@ -1,10 +1,15 @@
 module Donaghy
+  ROOT_QUEUE = "global_event"
 
   def self.configuration
     return @configuration if @configuration
     @configuration = Configuration.new
     @configuration.defaults(default_config)
     @configuration
+  end
+
+  def self.logger
+    @logger ||= Sidekiq.logger
   end
 
   def self.server
@@ -50,6 +55,7 @@ require 'donaghy/queue_finder'
 require 'donaghy/event_distributer_worker'
 require 'donaghy/subscribe_to_event_worker'
 require 'donaghy/listener_serializer'
+require 'donaghy/service'
 require 'configliere'
 
 require 'donaghy/configuration'

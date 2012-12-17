@@ -6,7 +6,6 @@ module Donaghy
     let(:event_path) { "blah/cool" }
     let(:queue) { "testQueue" }
     let(:class_name) { "KlassHandler" }
-    let(:event) { Event.new(path: event_path, payload: true)}
     let(:queue_finder) { QueueFinder.new(event_path)}
 
     before do
