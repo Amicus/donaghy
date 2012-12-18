@@ -20,6 +20,7 @@ module Donaghy
 
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
+          Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.root_event_path, self.name]}"
           SubscribeToEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
         end
       end
@@ -40,13 +41,13 @@ module Donaghy
     end
 
     def trigger(path, opts = {})
-      logger.debug "#{self.class.name} is triggering: #{event_path(path)} with #{opts.inspect}"
+      logger.info "#{self.class.name} is triggering: #{event_path(path)} with #{opts.inspect}"
       global_publish(event_path(path), opts)
     end
 
     def root_trigger(path, opts = {})
-      logger.debug "#{self.class.name} is global_root_triggering: #{path_with_root(path)} with #{opts.inspect}"
-      global_publish(path_with_root(path), opts)
+      logger.info "#{self.class.name} is global_root_triggering: #{path} with #{opts.inspect}"
+      global_publish(path, opts)
     end
 
   private

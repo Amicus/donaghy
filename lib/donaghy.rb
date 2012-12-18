@@ -1,5 +1,6 @@
 module Donaghy
   ROOT_QUEUE = "global_event"
+  REDIS_TIMEOUT = 5
 
   def self.configuration
     return @configuration if @configuration
@@ -9,11 +10,15 @@ module Donaghy
   end
 
   def self.root_event_path
-    configuration[:root_event_path] || "donaghy"
+    configuration[:queue_name] || "donaghy"
   end
 
   def self.logger
     @logger ||= Sidekiq.logger
+  end
+
+  def self.logger=(logger)
+    @logger = logger
   end
 
   def self.server
@@ -41,7 +46,7 @@ module Donaghy
 
   def self.redis
     return @redis if @redis
-    @redis = ConnectionPool.new(:size => 5, :timeout => 3) { Redis.new(configuration[:redis]) }
+    @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { Redis.new(configuration[:redis]) }
   end
 
 end

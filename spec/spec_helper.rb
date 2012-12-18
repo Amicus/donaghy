@@ -1,7 +1,6 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'pry'
 require 'donaghy'
-require 'sidekiq/testing'
 
 Dir["spec/support/**/*.rb"].each {|f| require File.expand_path(f)}
 

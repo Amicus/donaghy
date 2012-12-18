@@ -1,6 +1,9 @@
 redis:
-  - localhost:6379
+  url: redis://localhost:6379
 zk:
-  - localhost:2181
+  hosts:
+    - localhost:2181
 concurrency: 50
-name: "phone_status"
+name: "donaghy_test"
+services:
+  - test_loaded_service

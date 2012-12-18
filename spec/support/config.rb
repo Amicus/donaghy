@@ -1,8 +1,4 @@
-CONFIG = {
-      redis: {
-          url: "redis://localhost:6379"
-      }
-  }
+CONFIG = YAML.load_file("spec/support/test_config.yml")
 
 RSpec.configure do |config|
   config.before(:suite) do
