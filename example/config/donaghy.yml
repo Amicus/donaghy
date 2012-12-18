@@ -7,3 +7,4 @@ concurrency: 50
 name: "example_listener"
 services:
   - example_listener
+  - benchmarker
