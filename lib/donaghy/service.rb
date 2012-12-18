@@ -52,10 +52,10 @@ module Donaghy
       global_publish(path, opts)
     end
 
-    def raise_system_error(evt, exception = nil)
+    def raise_system_error(message, evt = nil, exception = nil)
       exception = exception || UndefinedSystemError.new
       backtrace = exception.backtrace ? exception.backtrace.join("\n") : ""
-      logger.error("RAISE SYSTEM ERROR: #{evt}; #{exception.inspect}; #{backtrace}")
+      logger.error("RAISE SYSTEM ERROR: #{message}, original_event: #{evt.inspect}; exception: #{exception.inspect}; #{backtrace}")
       root_trigger("system_error", payload: {original_event: evt, exception: {
           klass: exception.class.to_s,
           backtrace: backtrace
