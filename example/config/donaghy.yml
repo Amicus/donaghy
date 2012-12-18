@@ -4,6 +4,6 @@ zk:
   hosts:
     - localhost:2181
 concurrency: 50
-name: "phone_status"
+name: "example_listener"
 services:
   - example_listener
