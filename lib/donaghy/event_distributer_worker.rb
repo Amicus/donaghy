@@ -12,7 +12,11 @@ module Donaghy
 
       queues_and_classes.each do |queue_and_class|
         logger.info("sending to #{queue_and_class.inspect}")
-        Sidekiq::Client.push('queue' => queue_and_class[:queue], 'class' => queue_and_class[:class_name], 'args' => event_hash)
+        Sidekiq::Client.push({
+            'queue' => queue_and_class[:queue],
+            'class' => queue_and_class[:class_name],
+            'args' => [path, event_hash.to_hash]
+        })
       end
     end
 

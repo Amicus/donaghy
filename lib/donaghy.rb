@@ -8,6 +8,10 @@ module Donaghy
     @configuration
   end
 
+  def self.root_event_path
+    configuration[:root_event_path] || "donaghy"
+  end
+
   def self.logger
     @logger ||= Sidekiq.logger
   end
