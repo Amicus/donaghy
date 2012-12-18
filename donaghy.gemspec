@@ -7,16 +7,15 @@ Gem::Specification.new do |gem|
   gem.name          = "donaghy"
   gem.version       = Donaghy::VERSION
   gem.authors       = ["Topper Bowers"]
-  gem.email         = ["topper@toppingdesign.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.email         = ["topper@amicushq.com.com"]
+  gem.description   = %q{gem to run services in torquebox using sidekiq and a custom layer}
+  gem.summary       = %q{gem to run services in torquebox using sidekiq and a custom layer}
+  gem.homepage      = "https://github.com/Amicus/donaghy"
 
   gem.add_dependency "sidekiq"
   gem.add_dependency "connection_pool"
   gem.add_dependency "configliere"
   gem.add_dependency("active_support")
-  gem.add_dependency("i18n")
 
   gem.add_development_dependency "rspec"
   gem.add_development_dependency "pry"
