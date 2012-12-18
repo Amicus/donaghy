@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
-require 'donaghy'
+require 'donaghy/cli'
 
 Donaghy::CLI.new(ARGV).console

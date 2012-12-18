@@ -62,7 +62,6 @@ require 'sidekiq/manager'
 require 'sidekiq/client'
 require 'configliere'
 
-require 'donaghy/cli'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
 require 'donaghy/event_distributer_worker'
