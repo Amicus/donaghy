@@ -1,4 +1,4 @@
-class ExampleListener
+class Benchmarker
   include Donaghy::Service
 
   receives "benchmarker/*", :handle_message_received, :version => "v1"
