@@ -3,7 +3,7 @@ redis:
 zk:
   hosts:
     - localhost:2181
-concurrency: 50
+concurrency: 10
 name: "donaghy_test"
 services:
   - test_loaded_service

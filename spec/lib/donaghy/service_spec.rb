@@ -24,7 +24,7 @@ module Donaghy
     let(:base_service) { BaseService.new }
 
     it "should #root_trigger" do
-      EventDistributerWorker.should_receive(:perform_async).with(event_path_with_root, hash_including(payload: "cool")).and_return(true)
+      EventDistributerWorker.should_receive(:perform_async).with(event_path, hash_including(payload: "cool")).and_return(true)
       base_service.root_trigger(event_path, payload: "cool")
     end
 
@@ -34,11 +34,8 @@ module Donaghy
     end
 
     it "should BaseService.subscribe_to_global_events" do
+      SubscribeToEventWorker.should_receive(:perform_async).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
       BaseService.subscribe_to_global_events
-      jobs = SubscribeToEventWorker.jobs
-      jobs.size.should == 1
-      job = jobs.first
-      job['args'].should == [subscribed_event_path, root_path, BaseService.name]
     end
 
     it "should handle the perform from sidekiq" do

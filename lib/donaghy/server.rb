@@ -2,9 +2,6 @@ module Donaghy
   class Server
     attr_reader :manager, :poller, :services
     attr_accessor :queues
-    def initialize(opts={})
-      Donaghy.configuration = opts
-    end
 
     def name
       Donaghy.configuration[:name]
@@ -45,7 +42,14 @@ module Donaghy
 
     def services
       Donaghy.configuration[:services].map do |service_name|
-        service_name.camelize.constantize
+        const_name = service_name.camelize
+
+        if Object.const_defined?(const_name)
+          const_name.constantize
+        else
+          require "lib/#{service_name}"
+          const_name.constantize
+        end
       end
     end
 
@@ -55,6 +59,7 @@ module Donaghy
       @poller = Sidekiq::Scheduled::Poller.new
       manager.async.start
       poller.async.poll(true)
+      Thread.pass
     end
 
     def configure_sidekiq
@@ -65,6 +70,7 @@ module Donaghy
       Sidekiq.configure_client do |config|
         config.redis = Donaghy.redis
       end
+      Sidekiq.options[:concurrency] = Donaghy.configuration[:concurrency] || 25
 
       Sidekiq.options[:queues] += queues
     end
