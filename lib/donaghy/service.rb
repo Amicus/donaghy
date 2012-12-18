@@ -28,8 +28,11 @@ module Donaghy
 
     #sidekiq method distributor
     def perform(path, event_hash)
-      meth_and_options = receives_hash[path]
-      send(meth_and_options[:method].to_sym, path, Event.from_hash(event_hash))
+      receives_hash.each_pair do |pattern, meth_and_options|
+        if File.fnmatch(pattern, path)
+          send(meth_and_options[:method].to_sym, path, Event.from_hash(event_hash))
+        end
+      end
     end
 
     def receives_hash

@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 module Donaghy
 
   describe Service do
@@ -7,7 +9,7 @@ module Donaghy
         class_attribute :handler
         self.handler = Queue.new
 
-        receives "sweet/pie", :handle_sweet_pie
+        receives "sweet/*", :handle_sweet_pie
 
         def handle_sweet_pie(path, evt)
           self.class.handler << [path, evt]
@@ -15,6 +17,7 @@ module Donaghy
       end
     end
 
+    let(:subscribed_event_path) { "sweet/*" }
     let(:event_path) { "sweet/pie" }
     let(:root_path) { Donaghy.root_event_path }
     let(:event_path_with_root) { "#{root_path}/#{event_path}"}
@@ -35,7 +38,7 @@ module Donaghy
       jobs = SubscribeToEventWorker.jobs
       jobs.size.should == 1
       job = jobs.first
-      job['args'].should == [event_path, root_path, BaseService.name]
+      job['args'].should == [subscribed_event_path, root_path, BaseService.name]
     end
 
     it "should handle the perform from sidekiq" do

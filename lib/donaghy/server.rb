@@ -9,19 +9,21 @@ module Donaghy
 
     def start
       configure_sidekiq
-
       Sidekiq::Stats::History.cleanup
-
-      @manager = Sidekiq::Manager.new(sidekiq_options)
-      @poller = Sidekiq::Scheduled::Poller.new
-      manager.async.start
-      poller.async.poll(true)
+      start_sidekiq
     end
 
     def stop
       poller.async.terminate if poller.alive?
       manager.async.stop(:shutdown => true, :timeout => sidekiq_options[:timeout])
       manager.wait(:shutdown)
+    end
+
+    def start_sidekiq
+      @manager = Sidekiq::Manager.new(sidekiq_options)
+      @poller = Sidekiq::Scheduled::Poller.new
+      manager.async.start
+      poller.async.poll(true)
     end
 
     def configure_sidekiq

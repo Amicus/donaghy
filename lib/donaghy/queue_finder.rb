@@ -19,10 +19,11 @@ module Donaghy
       end
     end
 
+    # we need to optimize this - but there ain't no event paths right now
     def matching_paths
       redis.with_connection do |redis|
         redis.zrange("donaghy_event_paths", 0, -1).select do |registered_path|
-          registered_path == @path
+          File.fnmatch(registered_path, @path)
         end
       end
     end

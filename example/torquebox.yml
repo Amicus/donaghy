@@ -1,0 +1,13 @@
+service:
+  'Donaghy::Server':
+    config:
+      config_file: config/donaghy.yml
+ruby:
+  version: 1.9
+environment:
+  RAILS_ENV: staging
+  ENVIRONMENT_ENV: staging
+pooling:
+  web:
+    min: 1
+    max: 1
