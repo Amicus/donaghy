@@ -1,3 +1,4 @@
+require 'donaghy'
 require 'pry'
 
 module Donaghy

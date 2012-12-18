@@ -54,10 +54,11 @@ module Donaghy
 
     def raise_system_error(evt, exception = nil)
       exception = exception || UndefinedSystemError.new
-      logger.error("RAISE SYSTEM ERROR: #{evt}; #{exception.inspect}; #{exception.backtrace.join("\n")}")
+      backtrace = exception.backtrace ? exception.backtrace.join("\n") : ""
+      logger.error("RAISE SYSTEM ERROR: #{evt}; #{exception.inspect}; #{backtrace}")
       root_trigger("system_error", payload: {original_event: evt, exception: {
           klass: exception.class.to_s,
-          backtrace: exception.backtrace.join("\n")
+          backtrace: backtrace
       }})
     end
 
