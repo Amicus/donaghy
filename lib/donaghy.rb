@@ -13,6 +13,10 @@ module Donaghy
     configuration[:queue_name] || "donaghy"
   end
 
+  def self.event_publisher
+    @event_publisher ||= EventPublisher.new
+  end
+
   def self.logger
     @logger ||= Sidekiq.logger
   end
@@ -40,7 +44,9 @@ module Donaghy
     {
         redis: {
             url: "redis://localhost:6379"
-        }
+        },
+        name: "donaghy_root",
+        concurrency: 25
     }
   end
 
@@ -51,22 +57,20 @@ module Donaghy
 
 end
 
-require 'i18n'
-require 'active_support/lazy_load_hooks'
-require 'active_support/core_ext/string'
 require 'active_support/core_ext/string/inflections'
-#require 'active_support/core_ext/string'
-
 require 'sidekiq/manager'
 require 'sidekiq/client'
+require 'configliere'
+
+require 'donaghy/cli'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
 require 'donaghy/event_distributer_worker'
 require 'donaghy/subscribe_to_event_worker'
 require 'donaghy/listener_serializer'
 require 'donaghy/service'
-require 'configliere'
-
 require 'donaghy/configuration'
 require 'donaghy/server'
+require 'donaghy/event_publisher'
+
 

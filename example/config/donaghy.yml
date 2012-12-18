@@ -6,4 +6,4 @@ zk:
 concurrency: 50
 name: "phone_status"
 services:
-  - phone_status
+  - example_listener

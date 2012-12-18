@@ -6,7 +6,7 @@ module Donaghy
     sidekiq_options :queue => ROOT_QUEUE
 
     def perform(path, event_hash)
-      logger.info("received to #{path}, #{event_hash.inspect}")
+      logger.info("received #{path}, #{event_hash.inspect}")
 
       queues_and_classes = QueueFinder.new(path).find
 

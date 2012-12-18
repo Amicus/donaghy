@@ -1,22 +1,19 @@
-require 'tectonics'
-
-class PhoneStatus
+class ExampleListener
   include Donaghy::Service
 
-  receives "phone-bank/users/call_sessions/*/calls/*", :handle_call_change, :version => "v1"
+  receives "example_listener/*", :handle_message_received, :version => "v1"
 
-  def handle_call_change(path, evt)
+  def handle_message_received(path, evt)
     # the original event published was trigger("phone-bank/users/call_sessions/abc/calls/def", {busy: true})
     # so:
-    evt.payload == {busy: true}
-    path == "phone-bank/users/call_sessions/abc/calls/def"
+    logger.info("payload: #{evt.payload}")
+    logger.info("path: #{path}")
     # instance method defined in the base class, or @params
     # maybe?
-    params == {call_session_id: "abc", call_id: "def"} # true?
 
-    # DO Work
+    # DO Work some work, trigger things
 
-    global_trigger("got_here/something", payload: "something") #triggers phone_status.got_here - will set the "orig"
+    root_trigger("got_here/something", payload: "something") #triggers phone_status.got_here - will set the "orig"
 
     # do work
 

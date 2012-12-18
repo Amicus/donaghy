@@ -1,5 +1,7 @@
 module Donaghy
 
+  class UndefinedSystemError < StandardError; end
+
   module Service
 
     def self.included(klass)
@@ -48,6 +50,15 @@ module Donaghy
     def root_trigger(path, opts = {})
       logger.info "#{self.class.name} is global_root_triggering: #{path} with #{opts.inspect}"
       global_publish(path, opts)
+    end
+
+    def raise_system_error(evt, exception = nil)
+      exception = exception || UndefinedSystemError.new
+      logger.error("RAISE SYSTEM ERROR: #{evt}; #{exception.inspect}; #{exception.backtrace.join("\n")}")
+      root_trigger("system_error", payload: {original_event: evt, exception: {
+          klass: exception.class.to_s,
+          backtrace: exception.backtrace.join("\n")
+      }})
     end
 
   private
