@@ -37,7 +37,7 @@ module Donaghy
     let(:event_path_with_root) { "#{root_path}/#{event_path}"}
     let(:base_service) { BaseService.new }
 
-    it "should have an event go throug the whole system" do
+    it "should have an event go through the whole system" do
       wait_till_subscribed
       TestLoadedService.new.root_trigger("sweet/pie", payload: true)
       TestLoadedService.handler.pop.last.payload.should be_true

@@ -3,6 +3,7 @@ module Donaghy
     attr_reader :manager, :poller, :services
     attr_accessor :queues
     def initialize(opts={})
+      Donaghy.configuration = opts
     end
 
     def name
