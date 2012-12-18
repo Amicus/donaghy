@@ -36,7 +36,12 @@ module Donaghy
       jobs.size.should == 1
       job = jobs.first
       job['args'].should == [event_path, root_path, BaseService.name]
+    end
 
+    it "should handle the perform from sidekiq" do
+      event = Event.from_hash(path: event_path, payload: "something")
+      BaseService.new.perform(event_path, event.to_hash)
+      BaseService.handler.pop.last.should == event
     end
 
 

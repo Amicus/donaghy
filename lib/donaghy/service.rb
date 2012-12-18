@@ -27,9 +27,9 @@ module Donaghy
     end
 
     #sidekiq method distributor
-    def perform(path, event)
+    def perform(path, event_hash)
       meth_and_options = receives_hash[path]
-      send(meth_and_options[:meth].to_sym, path, event)
+      send(meth_and_options[:method].to_sym, path, Event.from_hash(event_hash))
     end
 
     def receives_hash
