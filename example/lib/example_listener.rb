@@ -20,12 +20,7 @@ class ExampleListener
     #oh no
     raise_system_error("OH NO") #triggers a big ol' alert to us
 
-    raise "unexpected" # will retry the event processing
+    # raise "unexpected" # will retry the event processing
   end
-
-  def handle_internal_event(path, evt)
-    #for inside the system, using the "on" syntax as opposed to the "receives"
-  end
-
 
 end
