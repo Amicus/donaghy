@@ -76,14 +76,7 @@ module Donaghy
 
   def self.zk
     return @zk if @zk
-    queue = Queue.new
-    ZK.new(configuration['zk.hosts'].join(","), timeout: 5) do |zk|
-      zk.on_connected do |event|
-        logger.info("puts #{event}")
-        queue << zk
-      end
-    end
-    @zk = queue.pop
+    @zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5)
   end
 
   def self.new_redis_connection(config = nil)
