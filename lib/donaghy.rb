@@ -29,6 +29,10 @@ module Donaghy
     @server ||= Server.new
   end
 
+  def self.actor_node_manager
+    @actor_node_manager ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
+  end
+
   def self.configuration=(opts)
     config_file = opts.delete(:config_file)
 
@@ -37,6 +41,7 @@ module Donaghy
     configuration.defaults(opts)
     configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
     configuration.resolve!
+    @failover_node_exists = does_failover_node_exist?
     configuration
   end
 
@@ -45,19 +50,79 @@ module Donaghy
         redis: {
             url: "redis://localhost:6379"
         },
+        zk: {
+            hosts: [
+                "localhost:2181"
+            ]
+        },
+        redis_failover: {
+          max_failures: 2,
+          node_strategy: 'majority',
+          failover_strategy: 'latency',
+          required_node_managers: 1,
+          nodes: [
+              { host: "localhost", port: 6379 }
+          ]
+        },
         name: "donaghy_root",
         concurrency: 25
     }
   end
 
+  def self.shutdown_zk
+    zk.close! if zk and zk.connected?
+    @zk = nil
+  end
+
+  def self.zk
+    return @zk if @zk
+    queue = Queue.new
+    ZK.new(configuration['zk.hosts'].join(","), timeout: 5) do |zk|
+      zk.on_connected do |event|
+        logger.info("puts #{event}")
+        queue << zk
+      end
+    end
+    @zk = queue.pop
+  end
+
+  def self.new_redis_connection(config = nil)
+    if @failover_node_exists
+      RedisFailover::Client.new(:zk => zk)
+    else
+      logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist")
+      Redis.new(config)
+    end
+  end
+
+  def self.using_failover?
+    @using_failover ||= does_failover_node_exist?
+  end
+
+  def self.does_failover_node_exist?
+    logger.info("finding if node exists")
+    zk.exists?("/redis_failover/nodes")
+  end
+
+  def self.reset_redis
+    @redis = nil
+  end
+
   def self.redis
     return @redis if @redis
-    @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { Redis.new(configuration[:redis]) }
+    @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration[:redis]) }
   end
 
 end
 
+at_exit do
+  Donaghy.logger.info("shutting down zk")
+  Donaghy.shutdown_zk
+end
+
 require 'active_support/core_ext/string/inflections'
+require 'zk'
+require 'redis_failover'
 require 'sidekiq/manager'
 require 'sidekiq/client'
 require 'configliere'
@@ -71,5 +136,6 @@ require 'donaghy/service'
 require 'donaghy/configuration'
 require 'donaghy/server'
 require 'donaghy/event_publisher'
+require 'donaghy/actor_node_manager'
 
 

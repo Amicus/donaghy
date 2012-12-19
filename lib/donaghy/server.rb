@@ -21,6 +21,7 @@ module Donaghy
       poller.async.terminate if poller.alive?
       manager.async.stop(:shutdown => true, :timeout => sidekiq_options[:timeout])
       manager.wait(:shutdown)
+      Donaghy.shutdown_zk
     end
 
     def setup_queues

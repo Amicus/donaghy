@@ -3,8 +3,17 @@ require 'spec_helper'
 module Donaghy
 
   describe "Integration Test" do
+    let(:failover_manager) { Donaghy.actor_node_manager }
+    let(:server) { Donaghy.server }
+
+    let(:subscribed_event_path) { "sweet/*" }
+    let(:event_path) { "sweet/pie" }
+    let(:root_path) { Donaghy.root_event_path }
+    let(:event_path_with_root) { "#{root_path}/#{event_path}"}
+    let(:base_service) { BaseService.new }
 
     after do
+      failover_manager.stop
       server.stop
     end
 
@@ -24,19 +33,19 @@ module Donaghy
         end
       end
 
+      failover_manager.start
+
+      #we want the redis to be over on the redis_failover now
+      Donaghy.reset_redis
+      Donaghy.configuration = Donaghy::TEST_CONFIG
+
+      Donaghy.redis.with {|conn| conn.should be_a(RedisFailover::Client)}
+
       server.start
 
       root_path.should == "donaghy_test"
 
     end
-
-    let(:server) { Donaghy.server }
-
-    let(:subscribed_event_path) { "sweet/*" }
-    let(:event_path) { "sweet/pie" }
-    let(:root_path) { Donaghy.root_event_path }
-    let(:event_path_with_root) { "#{root_path}/#{event_path}"}
-    let(:base_service) { BaseService.new }
 
     it "should have an event go through the whole system" do
       Celluloid.exception_handler do |ex|

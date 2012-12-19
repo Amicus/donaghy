@@ -4,4 +4,8 @@ RSpec.configure do |config|
       redis.flushdb
     end
   end
+  config.after(:suite) do
+    Donaghy.zk.close!
+  end
+
 end

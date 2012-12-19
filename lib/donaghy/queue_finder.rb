@@ -12,7 +12,7 @@ module Donaghy
     end
 
     def listeners_for(matched_path)
-      redis.with_connection do |redis|
+      redis.with do |redis|
         redis.smembers("donaghy_#{matched_path}").map do |serialized_listener|
           ListenerSerializer.load(serialized_listener)
         end
@@ -21,7 +21,7 @@ module Donaghy
 
     # we need to optimize this - but there ain't no event paths right now
     def matching_paths
-      redis.with_connection do |redis|
+      redis.with do |redis|
         redis.zrange("donaghy_event_paths", 0, -1).select do |registered_path|
           File.fnmatch(registered_path, @path)
         end

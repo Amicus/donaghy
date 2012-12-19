@@ -3,6 +3,14 @@ redis:
 zk:
   hosts:
     - localhost:2181
+redis_failover:
+  max_failures: 2
+  node_strategy: majority
+  failover_strategy: latency
+  required_node_managers: 1
+  nodes:
+    - host: localhost
+      port: 6379
 concurrency: 10
 name: "donaghy_test"
 services:
