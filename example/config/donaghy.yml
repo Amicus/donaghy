@@ -3,7 +3,7 @@ redis:
 zk:
   hosts:
     - localhost:2181
-concurrency: 50
+concurrency: 100
 name: "example_listener"
 services:
   - example_listener

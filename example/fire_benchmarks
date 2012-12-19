@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+require 'donaghy'
+
+event_publisher = Donaghy.event_publisher
+
+event_publisher.root_trigger("benchmarker/start")
+10_000.times do
+  event_publisher.root_trigger("benchmarker/message")
+end
+event_publisher.root_trigger("benchmarker/stop")
+
+puts "results"
+
+def results
+  Donaghy.redis.with do |conn|
+    count = conn.get("benchmarker_count")
+    puts("count: #{count} \n")
+    begin_time = conn.get("benchmarker_start")
+    end_time = conn.get("benchmarker_end")
+
+    total = end_time.to_i - begin_time.to_i
+    puts("Results:  begin: #{begin_time}; end: #{end_time}; total: #{total}s or: #{total.to_f / count.to_f}s per message")
+
+  end
+end
