@@ -35,7 +35,7 @@ module Donaghy
 
   def self.configuration=(opts)
     config_file = opts.delete(:config_file)
-
+    configuration.read("/mnt/configs/donaghy_resources.yml")
     configuration.read("config/donaghy.yml")
     configuration.read(config_file) if config_file
     configuration.defaults(opts)
@@ -48,7 +48,9 @@ module Donaghy
   def self.default_config
     {
         redis: {
-            url: "redis://localhost:6379"
+            hosts: [
+                {host: "localhost", port: 6379}
+            ]
         },
         zk: {
             hosts: [
@@ -84,7 +86,7 @@ module Donaghy
       RedisFailover::Client.new(:zk => zk)
     else
       logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist")
-      Redis.new(config)
+      Redis.new(url: "redis://#{config[:host]}:#{config[:port]}")
     end
   end
 
@@ -103,7 +105,7 @@ module Donaghy
 
   def self.redis
     return @redis if @redis
-    @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration[:redis]) }
+    @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration['redis.hosts'].first) }
   end
 
 end

@@ -1,5 +1,7 @@
 redis:
-  url: redis://localhost:6379
+  hosts:
+    - host: localhost
+      port: 6379
 zk:
   hosts:
     - localhost:2181
