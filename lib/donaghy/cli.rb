@@ -27,7 +27,7 @@ module Donaghy
         when 'publish'
           Donaghy.event_publisher.root_trigger(argv[0], payload: argv[1])
         when 'listall'
-          $stdout.puts Donaghy::QueueFinder.list_all.inspect
+          $stdout.puts Donaghy::QueueFinder.all_listeners.inspect
         else
           raise ArgumentError, "Cannot understand argv"
       end

@@ -11,9 +11,7 @@ module Donaghy
         Binding.any_instance.should_receive(:pry).and_return(true)
         CLI.new(argv)
       end
-
     end
-
     describe "publish" do
       let(:event_path) { "path/to/event" }
       let(:payload) { "some_payload" }
@@ -23,22 +21,15 @@ module Donaghy
         Donaghy.event_publisher.should_receive(:root_trigger).with(event_path, payload: payload).and_return(true)
         CLI.new(argv)
       end
-
     end
 
     describe "listall" do
       let(:argv) { ['listall']}
 
       it "should QueueFinder.list_all" do
-        QueueFinder.should_receive(:list_all).and_return "testOutputFromListAll"
+        QueueFinder.should_receive(:all_listeners).and_return "testOutputFromListAll"
         CLI.new(argv)
       end
-
-
-
     end
-
-
   end
-
 end
