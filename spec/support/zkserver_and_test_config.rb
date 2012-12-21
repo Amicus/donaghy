@@ -19,10 +19,5 @@ RSpec.configure do |config|
     Donaghy.configuration = Donaghy::TEST_CONFIG
   end
 
-  config.after(:suite) do
-    ZK_SPEC_SERVER.shutdown
-    #FileUtils.rm_r("zookeeper")
-  end
-
 end
 

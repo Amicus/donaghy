@@ -6,6 +6,7 @@ RSpec.configure do |config|
   end
   config.after(:suite) do
     Donaghy.zk.close!
+    ZK_SPEC_SERVER.shutdown
   end
 
 end
