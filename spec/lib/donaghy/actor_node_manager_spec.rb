@@ -20,17 +20,12 @@ module Donaghy
       manager.stop
     end
 
-    it "should work with RedisFailover" do
+    it "should work with RedisFailover and start a node manager" do
       manager.node_manager.should_receive(:start).and_return(true)
       manager.start
       Thread.pass
       redis = RedisFailover::Client.new(:zk => zk)
       redis.keys.should be_a(Array)
-    end
-
-    it "should start the node manager" do
-      manager.node_manager.should_receive(:start).and_return(true)
-      manager.start
     end
 
   end
