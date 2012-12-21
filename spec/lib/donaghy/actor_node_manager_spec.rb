@@ -23,6 +23,7 @@ module Donaghy
     it "should work with RedisFailover" do
       manager.node_manager.should_receive(:start).and_return(true)
       manager.start
+      Thread.pass
       redis = RedisFailover::Client.new(:zk => zk)
       redis.keys.should be_a(Array)
     end
