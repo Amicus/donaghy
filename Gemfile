@@ -4,5 +4,6 @@ source 'https://rubygems.org'
 gemspec
 
 group :test do
+  gem 'rake'
   gem 'ci_reporter', '~> 1.7.3'
 end
