@@ -13,6 +13,12 @@ module Donaghy
       SubscribeToEventWorker.new.perform(event_path, queue, class_name)
     end
 
+    it "should QueueFinder.all_listeners" do
+      QueueFinder.all_listeners.should == {
+          event_path => [{queue: queue, class_name: class_name}]
+      }
+    end
+
     describe "#find" do
       let(:results) { queue_finder.find }
 

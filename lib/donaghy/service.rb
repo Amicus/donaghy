@@ -27,6 +27,14 @@ module Donaghy
         end
       end
 
+      #this is for shutting down a service for good
+      def unsubscribe_all_instances
+        receives_hash.each_pair do |pattern, meth_and_options|
+          Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.root_event_path, self.name]}"
+          UnsubscribeFromEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
+        end
+      end
+
     end
 
     #sidekiq method distributor

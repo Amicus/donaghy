@@ -38,6 +38,11 @@ module Donaghy
       BaseService.subscribe_to_global_events
     end
 
+    it "should BaseService.unsubscribe_all_instances" do
+      UnsubscribeFromEventWorker.should_receive(:perform_async).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
+      BaseService.unsubscribe_all_instances
+    end
+
     it "should handle the perform from sidekiq" do
       event = Event.from_hash(path: event_path, payload: "something")
       BaseService.new.perform(event_path, event.to_hash)
