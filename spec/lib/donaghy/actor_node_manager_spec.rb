@@ -4,35 +4,32 @@ module Donaghy
 
   describe ActorNodeManager do
     let(:manager) { Donaghy.actor_node_manager }
+    let(:node_path) { "/redis_failover/nodes" }
+    let(:zk) { Donaghy.zk }
+
+    before do
+      #bootstrap the paths, so we don't have to wait since we know localhost works
+      if zk.exists?(node_path)
+        zk.set("/redis_failover/nodes", "{\"master\":\"localhost:6379\",\"slaves\":[],\"unavailable\":[]}")
+      else
+        zk.create("/redis_failover/nodes", "{\"master\":\"localhost:6379\",\"slaves\":[],\"unavailable\":[]}")
+      end
+    end
 
     after do
       manager.stop
     end
 
-    it "should allow a redis failover to happen" do
+    it "should work with RedisFailover" do
+      manager.node_manager.should_receive(:start).and_return(true)
       manager.start
-      path = "/redis_failover/nodes"
-      Donaghy.logger.info("waiting for #{path}")
-      wait_for(path)
-
-      zk.exists?(path).should be_true
-      redis = RedisFailover::Client.new(:zk => Donaghy.zk)
+      redis = RedisFailover::Client.new(:zk => zk)
       redis.keys.should be_a(Array)
     end
 
-    def wait_for(path)
-      queue = Queue.new
-      zk.register(path) do |event|
-        queue.push(:path_exists)
-      end
-      queue.push(:path_exists) if zk.exists?(path, :watch => true)
-      Timeout.timeout(10) do
-        queue.pop.should == :path_exists
-      end
-    end
-
-    def zk
-      Donaghy.zk
+    it "should start the node manager" do
+      manager.node_manager.should_receive(:start).and_return(true)
+      manager.start
     end
 
   end

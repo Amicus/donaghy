@@ -11,6 +11,8 @@ module Donaghy
     let(:root_path) { Donaghy.root_event_path }
     let(:event_path_with_root) { "#{root_path}/#{event_path}"}
     let(:base_service) { BaseService.new }
+    let(:node_path) { "/redis_failover/nodes" }
+    let(:zk) { Donaghy.zk }
 
     after do
       failover_manager.stop
@@ -38,6 +40,13 @@ module Donaghy
       #we want the redis to be over on the redis_failover now
       Donaghy.reset_redis
       Donaghy.configuration = Donaghy::TEST_CONFIG
+
+      #bootstrap the failover manager here
+      if zk.exists?(node_path)
+        zk.set("/redis_failover/nodes", "{\"master\":\"localhost:6379\",\"slaves\":[],\"unavailable\":[]}")
+      else
+        zk.create("/redis_failover/nodes", "{\"master\":\"localhost:6379\",\"slaves\":[],\"unavailable\":[]}")
+      end
 
       Donaghy.redis.with {|conn| conn.should be_a(RedisFailover::Client)}
 
@@ -69,6 +78,17 @@ module Donaghy
       end
     rescue Timeout::Error
       binding.pry
+    end
+
+    def wait_for(path, timeout = 25)
+      queue = Queue.new
+      zk.register(path) do |event|
+        queue.push(:path_exists)
+      end
+      queue.push(:path_exists) if zk.exists?(path, :watch => true)
+      Timeout.timeout(timeout) do
+        queue.pop.should == :path_exists
+      end
     end
 
     def subscribed?
