@@ -18,9 +18,11 @@ module Donaghy
 
     def stop
       logger.info("stopping server #{name}")
-      poller.async.terminate if poller.alive?
-      manager.async.stop(:shutdown => true, :timeout => sidekiq_options[:timeout])
-      manager.wait(:shutdown)
+      poller.async.terminate if poller and poller.alive?
+      if manager
+        manager.async.stop(:shutdown => true, :timeout => sidekiq_options[:timeout])
+        manager.wait(:shutdown)
+      end
       Donaghy.shutdown_zk
     end
 

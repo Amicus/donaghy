@@ -7,16 +7,18 @@ module Donaghy
       logger.info("initializing redis failover with #{config.inspect}")
       RedisFailover::Util.logger = logger
       @node_manager = RedisFailover::NodeManager.new(config)
+      #this is dirty, but no way to pass in the zk to the node manager
+      @node_manager.instance_variable_set(:@zk, config[:zk])
+      @node_manager
     end
 
-    #designed to be run with async
     def start
+      logger.info("starting up the ActorNodeManager")
       Thread.new { node_manager.start }
     end
 
     def stop
       node_manager.shutdown
-      node_manager.zk.close!
     rescue SystemExit
       true
     end

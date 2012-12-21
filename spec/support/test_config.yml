@@ -4,7 +4,7 @@ redis:
       port: 6379
 zk:
   hosts:
-    - localhost:2181
+    - localhost:21811 # this is ZK_SPEC_SERVER_PORT
 redis_failover:
   max_failures: 2
   node_strategy: majority

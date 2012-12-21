@@ -78,6 +78,7 @@ module Donaghy
 
   def self.zk
     return @zk if @zk
+    logger.info "setting up zk with #{configuration['zk.hosts'].join(",")}"
     @zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5)
   end
 
