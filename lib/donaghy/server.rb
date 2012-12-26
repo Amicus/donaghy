@@ -74,7 +74,7 @@ module Donaghy
         config.redis = Donaghy.redis
       end
 
-      Sidekiq::Util.logger = Donaghy.logger
+      Sidekiq.logger = Donaghy.logger
       Sidekiq.options[:concurrency] = Donaghy.configuration[:concurrency] || 25
 
       Sidekiq.options[:queues] += queues
