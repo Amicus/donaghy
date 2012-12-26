@@ -47,6 +47,7 @@ module Donaghy
     configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
     configuration.resolve!
     @using_failover = using_failover?
+    logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist") unless using_failover?
     logger.info("Donaghy configuration is now: #{configuration.inspect}")
     configuration
   end
@@ -92,7 +93,6 @@ module Donaghy
     if @using_failover
       RedisFailover::Client.new(:zk => zk)
     else
-      logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist")
       Redis.new(url: "redis://#{config[:host]}:#{config[:port]}")
     end
   end
