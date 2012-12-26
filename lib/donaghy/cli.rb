@@ -37,7 +37,7 @@ module Donaghy
           logger.info("Received RUN from the CLI... starting up a server")
           run_server
         else
-          raise ArgumentError, "Cannot understand argv"
+          raise ArgumentError, "Cannot understand argv: #{argv}"
       end
     end
 

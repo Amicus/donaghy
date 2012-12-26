@@ -4,6 +4,16 @@ require 'donaghy/cli'
 module Donaghy
 
   describe CLI do
+
+    describe "with an unknown command" do
+      let(:argv) { %w(NeverACOMMAND) }
+
+      it "should raise an ArgumentError" do
+        ->() { CLI.new(argv).parse }.should raise_error(ArgumentError)
+      end
+
+    end
+
     describe "console" do
       let(:argv) { %w(console) }
 
