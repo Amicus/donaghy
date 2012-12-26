@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 require 'donaghy/cli'
 
-Donaghy::CLI.new(ARGV.dup)
+Donaghy::CLI.new(ARGV.dup).parse
