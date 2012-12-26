@@ -5,7 +5,7 @@ module Donaghy
   class CLI
 
     attr_reader :argv, :mutex, :interrupted
-    def initialize(argv = nil)
+    def initialize(argv)
       @argv = argv
       @mutex = Mutex.new
       @interrupted = false
