@@ -32,7 +32,7 @@ module Donaghy
   end
 
   def self.actor_node_manager
-    @actor_node_manager ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
+    Celluloid::Actor[:actor_node_manager] ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
   end
 
   def self.configuration=(opts)
