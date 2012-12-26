@@ -20,6 +20,7 @@ module Donaghy
       if argv.first == "-c"
         argv.shift
         file = argv.shift
+        logger.info("CLI using config file: #{file}")
         Donaghy.configuration = {config_file: file}
       end
     end

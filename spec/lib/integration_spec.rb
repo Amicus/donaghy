@@ -2,6 +2,14 @@ require 'spec_helper'
 
 module Donaghy
 
+  describe Donaghy do
+
+    it "should raise on a missing config file" do
+      ->() { Donaghy.configuration = {config_file: "/path/to/no/file.yml"} }.should raise_error(MissingConfigurationFile)
+    end
+
+  end
+
   describe "Integration Test" do
     let(:failover_manager) { Donaghy.actor_node_manager }
     let(:server) { Donaghy.server }

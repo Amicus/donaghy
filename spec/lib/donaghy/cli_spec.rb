@@ -14,6 +14,17 @@ module Donaghy
 
     end
 
+    describe "with a -c" do
+      let(:file_path) { "spec/support/test_config.yml" }
+      let(:argv) { ['-c', file_path, 'console'] }
+
+      it "should set Donaghy config file to the argument" do
+        Binding.any_instance.should_receive(:pry).and_return(true)
+        CLI.new(argv).parse
+        Donaghy.configuration[:config_file].should == file_path
+      end
+    end
+
     describe "console" do
       let(:argv) { %w(console) }
 

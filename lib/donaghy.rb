@@ -2,6 +2,8 @@ module Donaghy
   ROOT_QUEUE = "global_event"
   REDIS_TIMEOUT = 5
 
+  class MissingConfigurationFile < StandardError; end
+
   def self.configuration
     return @configuration if @configuration
     @configuration = Configuration.new
@@ -34,14 +36,18 @@ module Donaghy
   end
 
   def self.configuration=(opts)
-    config_file = opts.delete(:config_file)
+    config_file = opts[:config_file]
     configuration.read("/mnt/configs/donaghy_resources.yml")
     configuration.read("config/donaghy.yml")
-    configuration.read(config_file) if config_file
+    if config_file
+      raise MissingConfigurationFile, "Config file: #{config_file} does not exist" unless File.exists?(config_file)
+      configuration.read(config_file)
+    end
     configuration.defaults(opts)
     configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
     configuration.resolve!
     @using_failover = using_failover?
+    logger.info("Donaghy configuration is now: #{configuration.inspect}")
     configuration
   end
 
