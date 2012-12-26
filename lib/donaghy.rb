@@ -41,7 +41,7 @@ module Donaghy
     configuration.defaults(opts)
     configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
     configuration.resolve!
-    @failover_node_exists = does_failover_node_exist?
+    @using_failover = using_failover?
     configuration
   end
 
@@ -57,15 +57,15 @@ module Donaghy
                 "localhost:2181"
             ]
         },
-        redis_failover: {
-          max_failures: 2,
-          node_strategy: 'majority',
-          failover_strategy: 'latency',
-          required_node_managers: 1,
-          nodes: [
-              { host: "localhost", port: 6379 }
-          ]
-        },
+        #redis_failover: {
+        #  max_failures: 2,
+        #  node_strategy: 'majority',
+        #  failover_strategy: 'latency',
+        #  required_node_managers: 1,
+        #  nodes: [
+        #      { host: "localhost", port: 6379 }
+        #  ]
+        #},
         name: "donaghy_root",
         concurrency: 25
     }
@@ -83,7 +83,7 @@ module Donaghy
   end
 
   def self.new_redis_connection(config = nil)
-    if @failover_node_exists
+    if @using_failover
       RedisFailover::Client.new(:zk => zk)
     else
       logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist")
@@ -92,7 +92,7 @@ module Donaghy
   end
 
   def self.using_failover?
-    @using_failover ||= does_failover_node_exist?
+    @using_failover ||= (configuration[:redis_failover] && does_failover_node_exist?)
   end
 
   def self.does_failover_node_exist?
