@@ -1,5 +1,4 @@
 require 'donaghy'
-require 'pry'
 
 module Donaghy
   class CLI
@@ -81,6 +80,7 @@ module Donaghy
     end
 
     def console
+      require 'pry'
       binding.pry
     end
 
