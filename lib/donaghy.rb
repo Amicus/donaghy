@@ -1,7 +1,9 @@
+require 'monitor'
+
 module Donaghy
   ROOT_QUEUE = "global_event"
   REDIS_TIMEOUT = 5
-  CONFIG_MUTEX = Mutex.new
+  CONFIG_GUARD = Monitor.new
 
   class MissingConfigurationFile < StandardError; end
 
@@ -17,31 +19,39 @@ module Donaghy
   end
 
   def self.event_publisher
-    @event_publisher ||= EventPublisher.new
+    return @event_publisher if @event_publisher
+    CONFIG_GUARD.synchronize do
+      @event_publisher = EventPublisher.new unless @event_publisher
+    end
   end
 
   def self.logger
-    @logger ||= Sidekiq.logger
+    return @logger if @logger
+    CONFIG_GUARD.synchronize do
+      @logger = Sidekiq.logger unless @logger
+    end
   end
 
   def self.logger=(logger)
-    CONFIG_MUTEX.synchronize do
+    CONFIG_GUARD.synchronize do
       @logger = logger
     end
   end
 
   def self.server
-    @server ||= Server.new
+    CONFIG_GUARD.synchronize do
+      @server ||= Server.new
+    end
   end
 
   def self.actor_node_manager
-    CONFIG_MUTEX.synchronize do
+    CONFIG_GUARD.synchronize do
       Celluloid::Actor[:actor_node_manager] ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
     end
   end
 
   def self.configuration=(opts)
-    CONFIG_MUTEX.synchronize do
+    CONFIG_GUARD.synchronize do
       config_file = opts[:config_file]
       configuration.read("/mnt/configs/donaghy_resources.yml")
       configuration.read("config/donaghy.yml")
@@ -93,7 +103,9 @@ module Donaghy
   def self.zk
     return @zk if @zk
     logger.info "setting up zk with #{configuration['zk.hosts'].join(",")}"
-    @zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5)
+    CONFIG_GUARD.synchronize do
+      @zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5) unless @zk
+    end
   end
 
   def self.new_redis_connection(config = nil)
@@ -114,14 +126,18 @@ module Donaghy
   end
 
   def self.reset_redis
-    CONFIG_MUTEX.synchronize do
+    CONFIG_GUARD.synchronize do
       @redis = nil
     end
   end
 
   def self.redis
     return @redis if @redis
-    @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration['redis.hosts'].first) }
+    CONFIG_GUARD.synchronize do
+      unless @redis
+        @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration['redis.hosts'].first) }
+      end
+    end
   end
 
 end
