@@ -1,6 +1,7 @@
 module Donaghy
   ROOT_QUEUE = "global_event"
   REDIS_TIMEOUT = 5
+  CONFIG_MUTEX = Mutex.new
 
   class MissingConfigurationFile < StandardError; end
 
@@ -24,7 +25,9 @@ module Donaghy
   end
 
   def self.logger=(logger)
-    @logger = logger
+    CONFIG_MUTEX.synchronize do
+      @logger = logger
+    end
   end
 
   def self.server
@@ -32,24 +35,28 @@ module Donaghy
   end
 
   def self.actor_node_manager
-    Celluloid::Actor[:actor_node_manager] ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
+    CONFIG_MUTEX.synchronize do
+      Celluloid::Actor[:actor_node_manager] ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
+    end
   end
 
   def self.configuration=(opts)
-    config_file = opts[:config_file]
-    configuration.read("/mnt/configs/donaghy_resources.yml")
-    configuration.read("config/donaghy.yml")
-    if config_file
-      raise MissingConfigurationFile, "Config file: #{config_file} does not exist" unless File.exists?(config_file)
-      configuration.read(config_file)
+    CONFIG_MUTEX.synchronize do
+      config_file = opts[:config_file]
+      configuration.read("/mnt/configs/donaghy_resources.yml")
+      configuration.read("config/donaghy.yml")
+      if config_file
+        raise MissingConfigurationFile, "Config file: #{config_file} does not exist" unless File.exists?(config_file)
+        configuration.read(config_file)
+      end
+      configuration.defaults(opts)
+      configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
+      configuration.resolve!
+      @using_failover = using_failover?
+      logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist") unless using_failover?
+      logger.info("Donaghy configuration is now: #{configuration.inspect}")
+      configuration
     end
-    configuration.defaults(opts)
-    configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
-    configuration.resolve!
-    @using_failover = using_failover?
-    logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist") unless using_failover?
-    logger.info("Donaghy configuration is now: #{configuration.inspect}")
-    configuration
   end
 
   def self.default_config
@@ -107,7 +114,9 @@ module Donaghy
   end
 
   def self.reset_redis
-    @redis = nil
+    CONFIG_MUTEX.synchronize do
+      @redis = nil
+    end
   end
 
   def self.redis
@@ -118,7 +127,7 @@ module Donaghy
 end
 
 at_exit do
-  Donaghy.logger.info("shutting down zk")
+  Donaghy.logger.info("shutting down zk in donaghy because of trapped at_exit")
   Donaghy.shutdown_zk
 end
 
