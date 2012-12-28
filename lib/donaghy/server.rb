@@ -1,3 +1,5 @@
+require 'socket'
+
 module Donaghy
   class Server
     attr_reader :manager, :poller, :services
@@ -13,6 +15,7 @@ module Donaghy
       register_event_handlers
       configure_sidekiq
       Sidekiq::Stats::History.cleanup
+      register_in_zk
       start_sidekiq
     end
 
@@ -56,6 +59,15 @@ module Donaghy
       end
     end
 
+    def register_in_zk
+      base_path = "/donaghy/#{name}"
+      zk.mkdir_p(base_path)
+      zk.create("#{base_path}/#{Socket.gethostname}", Donaghy.configuration.inspect, mode: :ephemeral)
+    rescue ZK::Exceptions::NodeExists
+      logger.warn("Trying to create the ephemeral node for #{base_path}/#{Socket.gethostname} but it already existed")
+      zk.set("#{base_path}/#{Socket.gethostname}", Donaghy.configuration.inspect)
+    end
+
     def start_sidekiq
       logger.info('starting sidekiq')
       @manager = Sidekiq::Manager.new(sidekiq_options)
@@ -82,6 +94,10 @@ module Donaghy
 
     def sidekiq_options
       Sidekiq.options
+    end
+
+    def zk
+      Donaghy.zk
     end
 
     def logger

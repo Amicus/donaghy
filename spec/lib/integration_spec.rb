@@ -70,6 +70,9 @@ module Donaghy
       end
       puts "waiting for subscribed"
       wait_till_subscribed
+      #it should register the configuration
+      Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first.should == Donaghy.configuration.inspect
+
       TestLoadedService.new.root_trigger("sweet/pie", payload: true)
       puts "before integration pop"
       Timeout.timeout(2) do
@@ -84,8 +87,8 @@ module Donaghy
           sleep 0.1
         end
       end
-    rescue Timeout::Error
-      binding.pry
+   # rescue Timeout::Error
+    #  binding.pry
     end
 
     def wait_for(path, timeout = 25)
