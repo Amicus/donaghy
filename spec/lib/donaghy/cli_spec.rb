@@ -73,5 +73,25 @@ module Donaghy
         CLI.new(argv).parse
       end
     end
+
+    describe "service_versions" do
+      let(:argv) { ['service_versions', 'donaghy_test', 'localhost00'] }
+      let(:service_versions) { {"Bob" => "0.15"} }
+
+      before do
+        Donaghy.zk.create("/donaghy/donaghy_test/localhost00", Marshal.dump({service_versions: service_versions}))
+      end
+
+      after do
+        Donaghy.zk.delete("/donaghy/donaghy_test/localhost00")
+      end
+
+      it "should store return the versions" do
+        $stdout.should_receive(:puts).with(service_versions.inspect).once.and_return(true)
+        CLI.new(argv).parse
+      end
+
+    end
+
   end
 end

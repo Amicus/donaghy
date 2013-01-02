@@ -33,6 +33,8 @@ module Donaghy
           Donaghy.event_publisher.root_trigger(argv[0], payload: argv[1])
         when 'listall'
           $stdout.puts Donaghy::QueueFinder.all_listeners.inspect
+        when 'service_versions'
+          $stdout.puts Marshal.load(Donaghy.zk.get("/donaghy/#{argv[0]}/#{argv[1]}").first)[:service_versions].inspect
         when 'run'
           logger.info("Received RUN from the CLI... starting up a server")
           run_server
