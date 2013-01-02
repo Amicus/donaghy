@@ -32,6 +32,8 @@ module Donaghy
       # this is defined in support, so just setting up listeners
       # for here, that's why it doesn't include Donaghy::Service
       class ::TestLoadedService
+        VERSION = "custom_version"
+
         class_attribute :handler
         self.handler = Queue.new
 
@@ -71,7 +73,12 @@ module Donaghy
       puts "waiting for subscribed"
       wait_till_subscribed
       #it should register the configuration
-      Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first.should == Donaghy.configuration.inspect
+      zk_obj = Marshal.load(Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first)
+      zk_obj.should == {
+                donaghy_configuration: Donaghy.configuration.to_hash,
+                service_versions: server.service_versions
+      }
+      zk_obj[:service_versions]['TestLoadedService'].should == 'custom_version'
 
       TestLoadedService.new.root_trigger("sweet/pie", payload: true)
       puts "before integration pop"

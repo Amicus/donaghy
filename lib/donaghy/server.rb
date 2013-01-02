@@ -47,7 +47,7 @@ module Donaghy
     end
 
     def services
-      Donaghy.configuration[:services].map do |service_name|
+      @services ||= Donaghy.configuration[:services].map do |service_name|
         const_name = service_name.camelize
 
         if Object.const_defined?(const_name)
@@ -60,12 +60,26 @@ module Donaghy
     end
 
     def register_in_zk
-      base_path = "/donaghy/#{name}"
-      zk.mkdir_p(base_path)
-      zk.create("#{base_path}/#{Socket.gethostname}", Donaghy.configuration.inspect, mode: :ephemeral)
+      zk_base_path = "/donaghy/#{name}"
+      zk.mkdir_p(zk_base_path)
+      zk_create_or_set("#{zk_base_path}/#{Socket.gethostname}", Marshal.dump({
+                donaghy_configuration: Donaghy.configuration.to_hash,
+                service_versions: service_versions
+      }))
+    end
+
+    def service_versions
+      services.each_with_object({}) do |service, hsh|
+        version = service.const_defined?(:VERSION) ? service.const_get(:VERSION) : 'unkown'
+        hsh[service.to_s] = version
+      end
+    end
+
+    def zk_create_or_set(path, data)
+      zk.create(path, data, mode: :ephemeral)
     rescue ZK::Exceptions::NodeExists
-      logger.warn("Trying to create the ephemeral node for #{base_path}/#{Socket.gethostname} but it already existed")
-      zk.set("#{base_path}/#{Socket.gethostname}", Donaghy.configuration.inspect)
+      logger.warn("Trying to create the ephemeral node for #{path} but it already existed")
+      zk.set(path, data)
     end
 
     def start_sidekiq
