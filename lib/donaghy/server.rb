@@ -89,7 +89,7 @@ module Donaghy
       Sidekiq.logger = Donaghy.logger
       Sidekiq.options[:concurrency] = Donaghy.configuration[:concurrency] || 25
 
-      Sidekiq.options[:queues] += queues
+      Sidekiq.options[:queues] = (Sidekiq.options[:queues] + queues).uniq
     end
 
     def sidekiq_options
