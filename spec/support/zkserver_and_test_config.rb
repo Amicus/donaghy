@@ -16,6 +16,10 @@ RSpec.configure do |config|
   config.before(:suite) do
     Donaghy.logger.info("running zk server and setting up Donaghy test configuration")
     ZK_SPEC_SERVER.run
+  end
+
+  config.before(:each) do
+    Sidekiq.options[:queues] = []
     Donaghy.configuration = Donaghy::TEST_CONFIG
   end
 

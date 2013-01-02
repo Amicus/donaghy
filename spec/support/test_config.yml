@@ -15,5 +15,6 @@ redis_failover:
       port: 6379
 concurrency: 10
 name: "donaghy_test"
+queue_name: "donaghy_test"
 services:
   - test_loaded_service
