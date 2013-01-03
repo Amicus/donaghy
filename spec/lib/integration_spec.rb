@@ -130,8 +130,8 @@ module Donaghy
       Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "myredisqueue", id: 'test', redis: true)
       Timeout.timeout(2) do
         message = Donaghy.redis.with {|conn| conn.blpop('myredisqueue') }
-        message = JSON.load(message.last)
-        payload = message['payload']
+        message = Event.from_hash(JSON.load(message.last))
+        payload = message.payload
         payload.should include(
             'version' => TestLoadedService.service_version,
             'id' => 'test'
@@ -143,7 +143,7 @@ module Donaghy
 
     def it_should_even_publisher_blocking_ping
       event = Donaghy.event_publisher.blocking_ping(Donaghy.configuration[:name], TestLoadedService.name, id: 'test')
-      payload = event['payload']
+      payload = event.payload
       payload.should include(
           'version' => TestLoadedService.service_version,
           'id' => 'test'

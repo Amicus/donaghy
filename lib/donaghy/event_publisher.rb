@@ -38,7 +38,7 @@ module Donaghy
           conn.pexpire(random_queue, (timeout_in + 1)*1000)
           conn.blpop(random_queue)
         end
-        JSON.load(event)
+        Event.from_hash(JSON.load(event))
       end
     end
 
