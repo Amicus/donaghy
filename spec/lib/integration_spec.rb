@@ -88,6 +88,7 @@ module Donaghy
       it_should_ping_on_root_path
       it_should_ping_on_host_only_path
       it_should_redis_ping
+      it_should_publisher_blocking_ping
 
       puts "after integration"
     end
@@ -141,7 +142,7 @@ module Donaghy
       end
     end
 
-    def it_should_even_publisher_blocking_ping
+    def it_should_publisher_blocking_ping
       event = Donaghy.event_publisher.blocking_ping(Donaghy.configuration[:name], TestLoadedService.name, id: 'test')
       payload = event.payload
       payload.should include(
