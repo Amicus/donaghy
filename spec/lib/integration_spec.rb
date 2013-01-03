@@ -87,6 +87,7 @@ module Donaghy
 
       it_should_ping_on_root_path
       it_should_ping_on_host_only_path
+      it_should_redis_ping
 
       puts "after integration"
     end
@@ -115,6 +116,22 @@ module Donaghy
       Timeout.timeout(2) do
         message = TestLoadedService.handler.pop
         payload = message.last.payload
+        payload.should include(
+            'version' => TestLoadedService.service_version,
+            'id' => 'test'
+        )
+        payload.should include('configuration')
+        payload.should include('received_at')
+      end
+    end
+
+    def it_should_redis_ping
+      puts "redis pinging"
+      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "myredisqueue", id: 'test', redis: true)
+      Timeout.timeout(2) do
+        message = Donaghy.redis.with {|conn| conn.blpop('myredisqueue') }
+        message = JSON.load(message.last)
+        payload = message['payload']
         payload.should include(
             'version' => TestLoadedService.service_version,
             'id' => 'test'
