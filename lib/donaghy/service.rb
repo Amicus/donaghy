@@ -100,6 +100,7 @@ module Donaghy
       reply_event = evt.payload['reply_to']
       logger.debug("PING RECEIVED: #{path}, REPLY_TO: #{reply_event}")
       root_trigger(reply_event, payload: {
+          id: evt.payload['id'],
           received_at: Time.now.utc,
           version: self.class.service_version,
           configuration: Donaghy.configuration.to_hash

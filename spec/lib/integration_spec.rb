@@ -93,13 +93,14 @@ module Donaghy
 
     def it_should_ping_on_root_path
       puts "pinging"
-      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "sweet/pie")
+      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "sweet/pie", id: 'test')
 
       Timeout.timeout(2) do
         message = TestLoadedService.handler.pop
         payload = message.last.payload
         payload.should include(
             'version' => TestLoadedService.service_version,
+            'id' => 'test'
         )
         payload.should include('configuration')
         payload.should include('received_at')
@@ -109,13 +110,14 @@ module Donaghy
     def it_should_ping_on_host_only_path
       puts "pinging"
 
-      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "sweet/pie", Socket.gethostname)
+      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "sweet/pie", host: Socket.gethostname, id: 'test')
 
       Timeout.timeout(2) do
         message = TestLoadedService.handler.pop
         payload = message.last.payload
         payload.should include(
             'version' => TestLoadedService.service_version,
+            'id' => 'test'
         )
         payload.should include('configuration')
         payload.should include('received_at')
