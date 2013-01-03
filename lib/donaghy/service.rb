@@ -1,3 +1,5 @@
+require 'socket'
+
 module Donaghy
 
   class UndefinedSystemError < StandardError; end
@@ -27,21 +29,45 @@ module Donaghy
         end
       end
 
+      def subscribe_to_pings
+        SubscribeToEventWorker.perform_async(ping_pattern, Donaghy.root_event_path, self.name)
+        SubscribeToEventWorker.perform_async(ping_pattern, Donaghy.local_service_host_queue, self.name)
+      end
+
+      def unsubscribe_host_pings
+        UnsubscribeFromEventWorker.perform_async(ping_pattern, Donaghy.local_service_host_queue, self.name)
+      end
+
       #this is for shutting down a service for good
       def unsubscribe_all_instances
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.root_event_path, self.name]}"
           UnsubscribeFromEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
+          [Donaghy.root_event_path, Donaghy.local_service_host_queue].each do |queue|
+            UnsubscribeFromEventWorker.perform_async(ping_pattern, queue, self.name)
+          end
         end
+      end
+
+      def service_version
+        const_defined?(:VERSION) ? const_get(:VERSION) : "unkown"
+      end
+
+      def ping_pattern
+        "#{Donaghy.configuration[:name]}/#{self.name.underscore}/ping"
       end
 
     end
 
     #sidekiq method distributor
     def perform(path, event_hash)
-      receives_hash.each_pair do |pattern, meth_and_options|
-        if File.fnmatch(pattern, path)
-          send(meth_and_options[:method].to_sym, path, Event.from_hash(event_hash))
+      if path == self.class.ping_pattern
+        donaghy_ping(path, Event.from_hash(event_hash))
+      else
+        receives_hash.each_pair do |pattern, meth_and_options|
+          if File.fnmatch(pattern, path)
+            send(meth_and_options[:method].to_sym, path, Event.from_hash(event_hash))
+          end
         end
       end
     end
@@ -68,6 +94,16 @@ module Donaghy
           klass: exception.class.to_s,
           backtrace: backtrace
       }})
+    end
+
+    def donaghy_ping(path, evt)
+      reply_event = evt.payload['reply_to']
+      logger.debug("PING RECEIVED: #{path}, REPLY_TO: #{reply_event}")
+      root_trigger(reply_event, payload: {
+          received_at: Time.now.utc,
+          version: self.class.service_version,
+          configuration: Donaghy.configuration.to_hash
+      })
     end
 
   private

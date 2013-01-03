@@ -22,6 +22,7 @@ module Donaghy
     def stop
       logger.info("stopping server #{name}")
       poller.async.terminate if poller and poller.alive?
+      unregister_host_ping_listeners
       if manager
         manager.async.stop(:shutdown => true, :timeout => sidekiq_options[:timeout])
         manager.wait(:shutdown)
@@ -33,14 +34,23 @@ module Donaghy
       logger.info('setting up queues')
       @queues ||= []
       @queues << ROOT_QUEUE
+      @queues << Donaghy.local_service_host_queue
       @queues << Donaghy.configuration[:queue_name]
       logger.info("listening on #{queues.inspect}")
       @queues
     end
 
+    def unregister_host_ping_listeners
+      services.each do |service|
+        service.unsubscribe_host_pings
+      end
+    end
+
     def register_event_handlers
       logger.info ("registering event handlers")
       services.each do |service|
+        logger.info("registering pings for #{service.name}")
+        service.subscribe_to_pings
         logger.info("registering global events for #{service.name}")
         service.subscribe_to_global_events
       end

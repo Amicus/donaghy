@@ -8,6 +8,10 @@ module Donaghy
       ->() { Donaghy.configuration = {config_file: "/path/to/no/file.yml"} }.should raise_error(MissingConfigurationFile)
     end
 
+    it "should have a local_service_host_queue" do
+      Donaghy.local_service_host_queue.should == "donaghy_#{Donaghy.configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}"
+    end
+
   end
 
   describe "Integration Test" do
@@ -29,9 +33,10 @@ module Donaghy
 
     before do
 
-      # this is defined in support, so just setting up listeners
-      # for here, that's why it doesn't include Donaghy::Service
       class ::TestLoadedService
+        # ::TestLoadedService is defined in support, so just setting up listeners
+        # for here, that's why it DOES NOT include Donaghy::Service
+
         VERSION = "custom_version"
 
         class_attribute :handler
@@ -72,20 +77,58 @@ module Donaghy
       end
       puts "waiting for subscribed"
       wait_till_subscribed
-      #it should register the configuration
-      zk_obj = Marshal.load(Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first)
-      zk_obj.should == {
-                donaghy_configuration: Donaghy.configuration.to_hash,
-                service_versions: server.service_versions
-      }
-      zk_obj[:service_versions]['TestLoadedService'].should == 'custom_version'
+      it_should_register_the_configuration
 
       TestLoadedService.new.root_trigger("sweet/pie", payload: true)
       puts "before integration pop"
       Timeout.timeout(2) do
         TestLoadedService.handler.pop.last.payload.should be_true
       end
+
+      it_should_ping_on_root_path
+      it_should_ping_on_host_only_path
+
       puts "after integration"
+    end
+
+    def it_should_ping_on_root_path
+      puts "pinging"
+      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "sweet/pie")
+
+      Timeout.timeout(2) do
+        message = TestLoadedService.handler.pop
+        payload = message.last.payload
+        payload.should include(
+            'version' => TestLoadedService.service_version,
+        )
+        payload.should include('configuration')
+        payload.should include('received_at')
+      end
+    end
+
+    def it_should_ping_on_host_only_path
+      puts "pinging"
+
+      Donaghy.event_publisher.ping(Donaghy.configuration[:name], TestLoadedService.name, "sweet/pie", Socket.gethostname)
+
+      Timeout.timeout(2) do
+        message = TestLoadedService.handler.pop
+        payload = message.last.payload
+        payload.should include(
+            'version' => TestLoadedService.service_version,
+        )
+        payload.should include('configuration')
+        payload.should include('received_at')
+      end
+    end
+
+    def it_should_register_the_configuration
+      zk_obj = Marshal.load(Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first)
+      zk_obj.should == {
+                donaghy_configuration: Donaghy.configuration.to_hash,
+                service_versions: server.service_versions
+      }
+      zk_obj[:service_versions]['TestLoadedService'].should == 'custom_version'
     end
 
     def wait_till_subscribed

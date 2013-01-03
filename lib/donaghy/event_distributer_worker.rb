@@ -8,9 +8,7 @@ module Donaghy
     def perform(path, event_hash)
       logger.info("received #{path}, #{event_hash.inspect}")
 
-      queues_and_classes = QueueFinder.new(path).find
-
-      queues_and_classes.each do |queue_and_class|
+      QueueFinder.new(path).find.each do |queue_and_class|
         logger.info("sending to #{queue_and_class.inspect}")
         Sidekiq::Client.push({
             'queue' => queue_and_class[:queue],

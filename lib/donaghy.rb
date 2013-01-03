@@ -69,6 +69,10 @@ module Donaghy
     end
   end
 
+  def self.local_service_host_queue
+    "donaghy_#{configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}"
+  end
+
   def self.default_config
     {
         redis: {

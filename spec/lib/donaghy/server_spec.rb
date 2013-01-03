@@ -35,7 +35,8 @@ module Donaghy
 
     describe "#configure_sidekiq" do
       subject { Sidekiq.options }
-      let(:sidekiq_queue_expected) {  ["global_event", alternate_queue] }
+      let(:host_specific_queue) { "donaghy_#{Donaghy.configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}" }
+      let(:sidekiq_queue_expected) {  ["global_event", host_specific_queue, alternate_queue] }
 
       before do
         server.setup_queues
@@ -44,6 +45,10 @@ module Donaghy
 
       it "should configure sidekiqs queues" do
         subject[:queues].should == sidekiq_queue_expected
+      end
+
+      it "should listen to the host and service specific queue (for checking)" do
+        subject[:queues].should include(host_specific_queue)
       end
 
       it "should not dupe queues on a second call" do
