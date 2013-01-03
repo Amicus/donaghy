@@ -79,6 +79,7 @@ module Donaghy
       let(:service_versions) { {"Bob" => "0.15"} }
 
       before do
+        Donaghy.zk.mkdir_p("/donaghy/donaghy_test")
         Donaghy.zk.create("/donaghy/donaghy_test/localhost00", Marshal.dump({service_versions: service_versions}))
       end
 
