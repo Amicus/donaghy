@@ -27,6 +27,21 @@ module Donaghy
       "#{root}/#{service.underscore}/ping/redis"
     end
 
+    # create a random key that will expire if not returned
+    # then use the redis ping and block on popping off the queue
+    def blocking_ping(root, service, opts = {})
+      random_queue = "#{root}_#{service.underscore}_#{SecureRandom.base64(16)}"
+      timeout_in = opts[:timeout] || 5
+      Timeout.timeout(timeout_in) do
+        ping(root, service, random_queue, opts.merge(redis: true))
+        queue, event = Donaghy.redis.with do |conn|
+          conn.pexpire(random_queue, (timeout_in + 1)*1000)
+          conn.blpop(random_queue)
+        end
+        JSON.load(event)
+      end
+    end
+
 
   end
 end

@@ -25,7 +25,7 @@ module Donaghy
 
     it "should have a BaseService.ping_pattern" do
       # class name of BaseService is Donaghy::BaseService so klass.underscore is donaghy/base_service
-      BaseService.ping_pattern.should == "#{Donaghy.configuration[:name]}/donaghy/base_service/ping"
+      BaseService.ping_pattern.should == "#{Donaghy.configuration[:name]}/donaghy/base_service/ping*"
     end
 
     it "should subscribe to pings" do

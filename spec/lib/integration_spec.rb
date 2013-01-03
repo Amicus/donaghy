@@ -141,6 +141,17 @@ module Donaghy
       end
     end
 
+    def it_should_even_publisher_blocking_ping
+      event = Donaghy.event_publisher.blocking_ping(Donaghy.configuration[:name], TestLoadedService.name, id: 'test')
+      payload = event['payload']
+      payload.should include(
+          'version' => TestLoadedService.service_version,
+          'id' => 'test'
+      )
+      payload.should include('configuration')
+      payload.should include('received_at')
+    end
+
     def it_should_register_the_configuration
       zk_obj = Marshal.load(Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first)
       zk_obj.should == {
