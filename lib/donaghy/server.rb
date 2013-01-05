@@ -12,8 +12,8 @@ module Donaghy
     def start
       logger.info("starting server #{name}")
       setup_queues
-      register_event_handlers
       configure_sidekiq
+      register_event_handlers
       Sidekiq::Stats::History.cleanup
       register_in_zk
       start_sidekiq
