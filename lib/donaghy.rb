@@ -61,6 +61,10 @@ module Donaghy
       end
       configuration.defaults(opts)
       configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
+      version_file_path = "config/version.txt"
+      if File.exists?(version_file_path)
+        configuration["#{configuration[:name]}_version"] = File.read(version_file_path)
+      end
       configuration.resolve!
       @using_failover = using_failover?
       logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist") unless using_failover?
