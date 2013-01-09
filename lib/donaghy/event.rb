@@ -10,8 +10,8 @@ module Donaghy
       new(hsh.merge(without_append: true))
     end
 
-    # we use payload_value for sending to errplane
-    ATTRIBUTE_METHODS = [:version, :payload, :generated_at, :generated_by, :path, :target, :payload_value]
+    # (toppper) we use value and timer for sending to errplane (at least)
+    ATTRIBUTE_METHODS = [:version, :payload, :generated_at, :generated_by, :path, :target, :value, :timer]
 
     attr_accessor *ATTRIBUTE_METHODS
     def initialize(opts)
@@ -35,7 +35,8 @@ module Donaghy
           generated_at: generated_at,
           generated_by: generated_by,
           path: path,
-          payload_value: payload_value
+          value: value,
+          timer: timer
       }
     end
 
