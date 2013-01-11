@@ -104,8 +104,12 @@ module Donaghy
   end
 
   def self.shutdown_zk
-    zk.close! if zk and zk.connected?
-    @zk = nil
+    CONFIG_GUARD.synchronize do
+      if zk and zk.connected?
+        zk.close!
+        @zk = nil
+      end
+    end
   end
 
   def self.zk
