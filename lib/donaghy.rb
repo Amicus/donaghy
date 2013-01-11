@@ -120,9 +120,19 @@ module Donaghy
     end
   end
 
+  # we're seeing weird hangs - so let's give redis failover its own zk and let it
+  # do its thiing
+  def self.failover_zk
+    return @failover_zk if @failover_zk
+    logger.info "setting up failover zk with #{configuration['zk.hosts'].join(",")}"
+    CONFIG_GUARD.synchronize do
+      @failover_zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5) unless @failover_zk
+    end
+  end
+
   def self.new_redis_connection(config = nil)
     if @using_failover
-      RedisFailover::Client.new(:zk => zk)
+      RedisFailover::Client.new(:zk => failover_zk)
     else
       Redis.new(url: "redis://#{config[:host]}:#{config[:port]}")
     end
