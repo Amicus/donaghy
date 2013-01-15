@@ -15,7 +15,7 @@ module Donaghy
   end
 
   def self.root_event_path
-    configuration[:queue_name] || "donaghy"
+    configuration[:name] || configuration[:queue_name] || "donaghy"
   end
 
   def self.event_publisher
