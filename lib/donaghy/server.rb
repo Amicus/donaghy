@@ -63,7 +63,7 @@ module Donaghy
         if Object.const_defined?(const_name)
           const_name.constantize
         else
-          require "lib/#{service_name}"
+          require "#{Dir.pwd}/lib/#{service_name}"
           const_name.constantize
         end
       end
