@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{gem to run services in torquebox using sidekiq and a custom layer}
   gem.homepage      = "https://github.com/Amicus/donaghy"
 
-  gem.add_dependency "sidekiq", "~> 2.6.4"
+  gem.add_dependency "sidekiq", "~> 2.7.0"
   gem.add_dependency "connection_pool"
   gem.add_dependency "configliere"
   gem.add_dependency "activesupport", ">= 3.0.0"
