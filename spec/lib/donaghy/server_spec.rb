@@ -16,6 +16,28 @@ module Donaghy
       Donaghy.configuration[:queue_name] = @old_queue_name
     end
 
+    describe "#register_in_zk" do
+      before do
+        server.register_in_zk
+      end
+
+      # this is also tested in the integration specs
+      it "should write out the configuration" do
+        zk_obj = Marshal.load(Donaghy.zk.get("/donaghy/#{Donaghy.configuration[:name]}/#{Socket.gethostname}").first)
+        zk_obj.should == {
+                  donaghy_configuration: Donaghy.configuration.to_hash,
+                  service_versions: server.service_versions
+        }
+      end
+
+
+      def zk
+        Donaghy.zk
+      end
+
+
+    end
+
     describe "#setup_queues" do
       subject { server.queues }
 

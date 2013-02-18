@@ -72,7 +72,7 @@ module Donaghy
     def register_in_zk
       zk_base_path = "/donaghy/#{name}"
       zk.mkdir_p(zk_base_path)
-      zk_create_or_set("#{zk_base_path}/#{Socket.gethostname}", Marshal.dump({
+      zk_create_or_set_now_and_on_connect("#{zk_base_path}/#{Socket.gethostname}", Marshal.dump({
                 donaghy_configuration: Donaghy.configuration.to_hash,
                 service_versions: service_versions
       }))
@@ -85,11 +85,21 @@ module Donaghy
       end
     end
 
+    def zk_create_or_set_now_and_on_connect(path, data)
+      zk_create_or_set(path, data)
+      zk.on_connected do
+        zk_create_or_set(path, data)
+      end
+    end
+
     def zk_create_or_set(path, data)
-      zk.create(path, data, mode: :ephemeral)
-    rescue ZK::Exceptions::NodeExists
-      logger.warn("Trying to create the ephemeral node for #{path} but it already existed")
-      zk.set(path, data)
+      begin
+        logger.info("creating #{path} in zk")
+        zk.create(path, data, mode: :ephemeral)
+      rescue ZK::Exceptions::NodeExists
+        logger.warn("Trying to create the ephemeral node for #{path} but it already existed")
+        zk.set(path, data)
+      end
     end
 
     def start_sidekiq
