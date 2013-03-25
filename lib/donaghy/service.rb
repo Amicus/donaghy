@@ -1,4 +1,5 @@
 require 'socket'
+require 'active_support/core_ext/class/attribute'
 
 module Donaghy
 
@@ -7,10 +8,10 @@ module Donaghy
   module Service
 
     def self.included(klass)
-      klass.send(:include, Sidekiq::Worker)
+      klass.class_attribute :donaghy_options
       klass.class_attribute :internal_root_path
       klass.extend(ClassMethods)
-      klass.sidekiq_options queue: Donaghy.root_event_path
+      klass.donaghy_options  = {queue: Donaghy.root_event_path}
     end
 
     module ClassMethods
@@ -25,6 +26,7 @@ module Donaghy
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.root_event_path, self.name]}"
+          global_publish
           SubscribeToEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
         end
       end

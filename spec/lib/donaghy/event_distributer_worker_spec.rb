@@ -11,7 +11,7 @@ module Donaghy
 
     class KlassHandler
       include Donaghy::Service
-      sidekiq_options :queue => "testQueue"
+      donaghy_options = {:queue => "testQueue"}
     end
 
     before do

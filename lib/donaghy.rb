@@ -1,8 +1,8 @@
 require 'monitor'
+require 'logger'
 
 module Donaghy
   ROOT_QUEUE = "global_event"
-  REDIS_TIMEOUT = 5
   CONFIG_GUARD = Monitor.new
 
   class MissingConfigurationFile < StandardError; end
@@ -28,8 +28,9 @@ module Donaghy
   def self.logger
     return @logger if @logger
     CONFIG_GUARD.synchronize do
-      @logger = Sidekiq.logger unless @logger
+      @logger = Logger.new($stdout) unless @logger
     end
+    @logger
   end
 
   def self.logger=(logger)
@@ -39,15 +40,42 @@ module Donaghy
   end
 
   def self.server
+    return @server if @server
     CONFIG_GUARD.synchronize do
-      @server ||= Server.new
+      @server = Server.new unless @server
+    end
+    @server
+
+  end
+
+  def self.storage
+    return @storage if @storage
+    CONFIG_GUARD.synchronize do
+      return @storage if @storage #catches the 2nd one to get here
+      case configuration[:storage]
+      when String, Symbol
+        @storage = "Donaghy::Storage::#{configuration[:storage].to_s.camelize}".constantize.new
+      else
+        @storage = configuration[:storage]
+      end
     end
   end
 
-  def self.actor_node_manager
+  def self.queue
+    return @queue if @queue
     CONFIG_GUARD.synchronize do
-      Celluloid::Actor[:actor_node_manager] ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
+      return @queue if @queue
+      case configuration[:queue]
+      when String, Symbol
+        @queue = "Donaghy::Queue::#{configuration[:queue].to_s.camelize}".constantize
+      else
+        @queue = configuration[:queue]
+      end
     end
+  end
+
+  def self.queue_for(name)
+    queue.find_by_name(name)
   end
 
   def self.configuration=(opts)
@@ -66,8 +94,6 @@ module Donaghy
         configuration["#{configuration[:name]}_version"] = File.read(version_file_path)
       end
       configuration.resolve!
-      @using_failover = using_failover?
-      logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist") unless using_failover?
       logger.info("Donaghy configuration is now: #{configuration.inspect}")
       configuration
     end
@@ -79,113 +105,31 @@ module Donaghy
 
   def self.default_config
     {
-        redis: {
-            hosts: [
-                {host: "localhost", port: 6379}
-            ]
-        },
-        zk: {
-            hosts: [
-                "localhost:2181"
-            ]
-        },
-        #redis_failover: {
-        #  max_failures: 2,
-        #  node_strategy: 'majority',
-        #  failover_strategy: 'latency',
-        #  required_node_managers: 1,
-        #  nodes: [
-        #      { host: "localhost", port: 6379 }
-        #  ]
-        #},
         name: "donaghy_root",
-        concurrency: 25
+        concurrency: 25,
+        storage: :in_memory,
+        queue: :sqs
     }
   end
 
-  def self.shutdown_zk
-    CONFIG_GUARD.synchronize do
-      if zk and zk.connected?
-        zk.close!
-        @zk = nil
-      end
-    end
-  end
-
-  def self.zk
-    return @zk if @zk
-    logger.info "setting up zk with #{configuration['zk.hosts'].join(",")}"
-    CONFIG_GUARD.synchronize do
-      @zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5) unless @zk
-    end
-  end
-
-  # we're seeing weird hangs - so let's give redis failover its own zk and let it
-  # do its thiing
-  def self.failover_zk
-    return @failover_zk if @failover_zk
-    logger.info "setting up failover zk with #{configuration['zk.hosts'].join(",")}"
-    CONFIG_GUARD.synchronize do
-      @failover_zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5) unless @failover_zk
-    end
-  end
-
-  def self.new_redis_connection(config = nil)
-    if @using_failover
-      RedisFailover::Client.new(:zk => failover_zk)
-    else
-      Redis.new(url: "redis://#{config[:host]}:#{config[:port]}")
-    end
-  end
-
-  def self.using_failover?
-    @using_failover ||= (configuration[:redis_failover] && does_failover_node_exist?)
-  end
-
-  def self.does_failover_node_exist?
-    logger.info("finding if node exists")
-    zk.exists?("/redis_failover/nodes")
-  end
-
-  def self.reset_redis
-    CONFIG_GUARD.synchronize do
-      @redis = nil
-    end
-  end
-
-  def self.redis
-    return @redis if @redis
-    CONFIG_GUARD.synchronize do
-      unless @redis
-        @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration['redis.hosts'].first) }
-      end
-    end
-  end
-
 end
 
-at_exit do
-  Donaghy.logger.info("shutting down zk in donaghy because of trapped at_exit")
-  Donaghy.shutdown_zk
-end
+$: << File.dirname(__FILE__)
 
 require 'active_support/core_ext/string/inflections'
-require 'zk'
-require 'redis_failover'
-require 'sidekiq/manager'
-require 'sidekiq/client'
 require 'configliere'
 
+require 'donaghy/configuration'
+require 'donaghy/fetcher'
+require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
 require 'donaghy/event_distributer_worker'
 require 'donaghy/subscribe_to_event_worker'
 require 'donaghy/unsubscribe_from_event_worker'
 require 'donaghy/listener_serializer'
-require 'donaghy/service'
-require 'donaghy/configuration'
 require 'donaghy/server'
 require 'donaghy/event_publisher'
-require 'donaghy/actor_node_manager'
+require 'donaghy/storage'
 
 

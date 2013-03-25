@@ -10,7 +10,7 @@ module Donaghy
       new(hsh.merge(without_append: true))
     end
 
-    # (toppper) we use value and timer for sending to errplane (at least)
+    # (topper) we use value and timer for sending to errplane (at least)
     ATTRIBUTE_METHODS = [:version, :payload, :generated_at, :generated_by, :path, :target, :value, :timer]
 
     attr_accessor *ATTRIBUTE_METHODS
@@ -24,6 +24,14 @@ module Donaghy
       @generated_by ||= []
       @generated_by << path unless without_append
       self
+    end
+
+    def payload=(val)
+      @payload = if val.kind_of?(Hash)
+                   Hashie::Mash.new(val)
+                 else
+                   val
+                 end
     end
 
     # target isn't serializable - so we don't put it in here,

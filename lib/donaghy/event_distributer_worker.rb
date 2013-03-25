@@ -1,25 +1,27 @@
 module Donaghy
 
   class EventDistributerWorker
-    include Sidekiq::Worker
+    include Donaghy::Service
 
-    sidekiq_options :queue => ROOT_QUEUE
+    donaghy_options = {:queue => ROOT_QUEUE}
 
-    def perform(path, event_hash)
+    receives "donaghy/event_distributor", :handle_distribution
+
+    def handle_distribution(path, event_hash)
       logger.info("received #{path}, #{event_hash.inspect}")
 
       QueueFinder.new(path).find.each do |queue_and_class|
         logger.info("sending to #{queue_and_class.inspect}")
-        Sidekiq::Client.push({
-            'queue' => queue_and_class[:queue],
-            'class' => queue_and_class[:class_name],
-            'args' => [path, event_hash.to_hash]
+
+        Donaghy.queue_for(queue_and_class[:queue]).publish({
+            class: queue_and_class[:class_name],
+            args: [path, event_hash.to_hash]
         })
       end
     end
 
     def logger
-      Sidekiq.logger
+      Donaghy.logger
     end
 
   end

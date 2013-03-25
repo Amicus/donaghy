@@ -1,16 +1,16 @@
 module Donaghy
   class UnsubscribeFromEventWorker
-    include Sidekiq::Worker
-    sidekiq_options :queue => ROOT_QUEUE
+    include Donaghy::Service
+    donaghy_options = {:queue => ROOT_QUEUE}
 
-    def perform(event_path, queue, class_name)
+    receives "donaghy/unsubscribe_from_path", :handle_unsubscribe
+
+    def handle_unsubscribe(path, evt)
+      payload = evt.payload
+      event_path, queue, class_name = payload.event_path, payload.queue, payload.class_name
       logger.warn("UNSUBSCRING #{event_path} from #{queue}, #{class_name}")
-      Donaghy.redis.with do |redis|
-        redis.multi do
-          redis.srem("donaghy_#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
-          redis.zrem("donaghy_event_paths", event_path)
-        end
-      end
+      Donaghy.storage.unset("donaghy_#{event_path}")
+      Donaghy.storage.remove_from_set("donaghy_event_paths", event_path)
     end
 
   end

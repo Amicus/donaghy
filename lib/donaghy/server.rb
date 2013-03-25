@@ -12,11 +12,7 @@ module Donaghy
     def start
       logger.info("starting server #{name}")
       setup_queues
-      configure_sidekiq
       register_event_handlers
-      Sidekiq::Stats::History.cleanup
-      register_in_zk
-      start_sidekiq
     end
 
     def stop
@@ -69,15 +65,6 @@ module Donaghy
       end
     end
 
-    def register_in_zk
-      zk_base_path = "/donaghy/#{name}"
-      zk.mkdir_p(zk_base_path)
-      zk_create_or_set_now_and_on_connect("#{zk_base_path}/#{Socket.gethostname}", Marshal.dump({
-                donaghy_configuration: Donaghy.configuration.to_hash,
-                service_versions: service_versions
-      }))
-    end
-
     def service_versions
       services.each_with_object({}) do |service, hsh|
         version = service.const_defined?(:VERSION) ? service.const_get(:VERSION) : 'unkown'
@@ -85,54 +72,6 @@ module Donaghy
       end
     end
 
-    def zk_create_or_set_now_and_on_connect(path, data)
-      zk_create_or_set(path, data)
-      zk.on_connected do
-        zk_create_or_set(path, data)
-      end
-    end
-
-    def zk_create_or_set(path, data)
-      begin
-        logger.info("creating #{path} in zk")
-        zk.create(path, data, mode: :ephemeral)
-      rescue ZK::Exceptions::NodeExists
-        logger.warn("Trying to create the ephemeral node for #{path} but it already existed")
-        zk.set(path, data)
-      end
-    end
-
-    def start_sidekiq
-      logger.info('starting sidekiq')
-      @manager = Sidekiq::Manager.new(sidekiq_options)
-      @poller = Sidekiq::Scheduled::Poller.new
-      manager.async.start
-      poller.async.poll(true)
-      Thread.pass
-    end
-
-    def configure_sidekiq
-      Sidekiq.configure_server do |config|
-        config.redis = Donaghy.redis
-      end
-
-      Sidekiq.configure_client do |config|
-        config.redis = Donaghy.redis
-      end
-
-      Sidekiq.logger = Donaghy.logger
-      Sidekiq.options[:concurrency] = Donaghy.configuration[:concurrency] || 25
-
-      Sidekiq.options[:queues] = (Sidekiq.options[:queues] + queues).uniq
-    end
-
-    def sidekiq_options
-      Sidekiq.options
-    end
-
-    def zk
-      Donaghy.zk
-    end
 
     def logger
       Donaghy.logger
