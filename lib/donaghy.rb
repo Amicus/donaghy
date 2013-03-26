@@ -52,21 +52,29 @@ module Donaghy
     end
   end
 
-  def self.queue
-    return @queue if @queue
+  def self.message_queue
+    return @message_queue if @message_queue
     CONFIG_GUARD.synchronize do
-      return @queue if @queue
-      case configuration[:queue]
+      return @message_queue if @message_queue
+      case configuration[:message_queue]
       when String, Symbol
-        @queue = "Donaghy::Queue::#{configuration[:queue].to_s.camelize}".constantize
+        @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].to_s.camelize}".constantize
       else
-        @queue = configuration[:queue]
+        @message_queue = configuration[:message_queue]
       end
     end
   end
 
   def self.queue_for(name)
-    queue.find_by_name(name)
+    message_queue.find_by_name(name)
+  end
+
+  def self.root_queue
+    return @root_queue if @root_queue
+    CONFIG_GUARD.synchronize do
+      @root_queue = queue_for(Donaghy::ROOT_QUEUE) unless @root_queue
+    end
+    @root_queue
   end
 
   def self.configuration=(opts)
@@ -99,8 +107,12 @@ module Donaghy
         name: "donaghy_root",
         concurrency: 25,
         storage: :in_memory,
-        queue: :sqs
+        message_queue: :sqs
     }
+  end
+
+  def self.reset
+    @root_queue = @configuration = @storage = @message_queue = @logger = @event_publisher = nil
   end
 
 end
@@ -111,6 +123,9 @@ require 'active_support/core_ext/string/inflections'
 require 'configliere'
 
 require 'donaghy/configuration'
+require 'donaghy/storage'
+require 'donaghy/message_queue'
+require 'donaghy/logging'
 require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
@@ -119,6 +134,5 @@ require 'donaghy/subscribe_to_event_worker'
 require 'donaghy/unsubscribe_from_event_worker'
 require 'donaghy/listener_serializer'
 require 'donaghy/event_publisher'
-require 'donaghy/storage'
 
-
+require 'donaghy/fetcher'

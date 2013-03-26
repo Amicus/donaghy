@@ -3,7 +3,7 @@ require 'pry'
 require 'donaghy'
 
 require 'donaghy/adapters/storage/in_memory'
-#require 'donaghy/adapaters/queue/sqs'
+require 'donaghy/adapters/message_queue/sqs'
 
 Dir["spec/support/**/*.rb"].each {|f| require File.expand_path(f)}
 

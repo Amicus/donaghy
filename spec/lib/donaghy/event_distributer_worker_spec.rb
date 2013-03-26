@@ -8,7 +8,7 @@ module Donaghy
     let(:class_name) { "KlassHandler" }
     let(:event) { Event.new(path: event_path, payload: true)}
     let(:queue_finder) { QueueFinder.new(event_path)}
-    let(:mock_queue) { mock(:queue, publish: true)}
+    let(:mock_queue) { mock(:message_queue, publish: true)}
     let(:subscription_event) do
       Event.from_hash({
           payload: {

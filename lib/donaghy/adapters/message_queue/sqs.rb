@@ -12,7 +12,7 @@ module Donaghy
 
   end
 
-  module Queue
+  module MessageQueue
     class Sqs
 
       def self.find_by_name(queue_name)
@@ -31,6 +31,14 @@ module Donaghy
 
       def receive
         SQSEvent.from_sqs(queue.receive_message)
+      end
+
+      def destroy
+        queue.delete
+      end
+
+      def exists?
+        queue.exists?
       end
 
     private

@@ -61,7 +61,7 @@ module Donaghy
           results.length.should == 2
         end
 
-        it "should be a hash of queue, class" do
+        it "should be a hash of message_queue, class" do
           results.last[:queue].should == queue
           results.last[:class_name].should == "KlassHandler"
         end
