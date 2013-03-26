@@ -70,11 +70,7 @@ module Donaghy
   end
 
   def self.default_queue
-    return @default_queue if @default_queue
-    CONFIG_GUARD.synchronize do
-      @default_queue = queue_for(default_queue_name) unless @default_queue
-    end
-    @default_queue
+    queue_for(default_queue_name)
   end
 
   def self.default_queue_name
@@ -83,11 +79,7 @@ module Donaghy
 
 
   def self.root_queue
-    return @root_queue if @root_queue
-    CONFIG_GUARD.synchronize do
-      @root_queue = queue_for(Donaghy::ROOT_QUEUE) unless @root_queue
-    end
-    @root_queue
+    queue_for(Donaghy::ROOT_QUEUE)
   end
 
   def self.configuration=(opts)
@@ -125,7 +117,7 @@ module Donaghy
   end
 
   def self.reset
-    @root_queue = @default_queue = @configuration = @storage = @message_queue = @logger = @event_publisher = nil
+    @configuration = @storage = @message_queue = @logger = @event_publisher = nil
   end
 
 end

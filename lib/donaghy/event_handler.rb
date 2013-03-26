@@ -11,7 +11,7 @@ module Donaghy
     end
 
     def process(event)
-      #TODO: actually do the work here
+      logger.info("received: #{event.to_hash.inspect}")
       event.acknowledge
       manager.async.event_handler_finished(current_actor)
     end

@@ -9,13 +9,14 @@ module Donaghy
 
     trap_exit :event_handler_or_fetcher_died
 
-    attr_reader :busy, :available, :fetcher, :stopped
+    attr_reader :busy, :available, :fetcher, :stopped, :queue
     def initialize(opts = {})
       @busy = []
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
         EventHandler.new_link(current_actor)
       end
-      @fetcher = Fetcher.new_link(current_actor, opts[:queue])
+      @queue = opts[:queue]
+      @fetcher = Fetcher.new_link(current_actor, @queue)
     end
 
     def start
@@ -27,6 +28,7 @@ module Donaghy
 
     def stop
       @stopped = true
+      @fetcher.stop_fetching
       # do more sidekiq like stuff here
       terminate
       signal(:shutdown)

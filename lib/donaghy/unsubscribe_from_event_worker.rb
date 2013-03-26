@@ -3,7 +3,19 @@ module Donaghy
     include Donaghy::Service
     donaghy_options = {:queue => ROOT_QUEUE}
 
-    receives "donaghy/unsubscribe_from_path", :handle_unsubscribe
+    EVENT_PATH = "donaghy/unsubscribe_from_path"
+    receives EVENT_PATH, :handle_unsubscribe
+
+    def self.async_unsubscribe(event_path, queue, class_name)
+      Donaghy.default_queue.publish(Event.from_hash({
+          path: EVENT_PATH,
+          payload: {
+              event_path: event_path,
+              queue: queue,
+              class_name: class_name
+          }
+      }))
+    end
 
     def handle_unsubscribe(_, evt)
       payload = evt.payload

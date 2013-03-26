@@ -14,6 +14,7 @@ module Donaghy
 
   module MessageQueue
     class Sqs
+      include Logging
 
       def self.find_by_name(queue_name)
         new(queue_name)
@@ -30,7 +31,8 @@ module Donaghy
       end
 
       def receive
-        SQSEvent.from_sqs(queue.receive_message)
+        message = queue.receive_message
+        return SQSEvent.from_sqs(message) if message
       end
 
       def destroy

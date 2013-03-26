@@ -26,26 +26,26 @@ module Donaghy
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.root_event_path, self.name]}"
-          SubscribeToEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
+          SubscribeToEventWorker.async_subscribe(pattern, Donaghy.root_event_path, self.name)
         end
       end
 
       def subscribe_to_pings
-        SubscribeToEventWorker.perform_async(ping_pattern, Donaghy.root_event_path, self.name)
-        SubscribeToEventWorker.perform_async(ping_pattern, Donaghy.local_service_host_queue, self.name)
+        SubscribeToEventWorker.async_subscribe(ping_pattern, Donaghy.root_event_path, self.name)
+        SubscribeToEventWorker.async_subscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
       end
 
       def unsubscribe_host_pings
-        UnsubscribeFromEventWorker.perform_async(ping_pattern, Donaghy.local_service_host_queue, self.name)
+        UnsubscribeFromEventWorker.async_unsubscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
       end
 
       #this is for shutting down a service for good
       def unsubscribe_all_instances
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.root_event_path, self.name]}"
-          UnsubscribeFromEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
+          UnsubscribeFromEventWorker.async_unsubscribe(pattern, Donaghy.root_event_path, self.name)
           [Donaghy.root_event_path, Donaghy.local_service_host_queue].each do |queue|
-            UnsubscribeFromEventWorker.perform_async(ping_pattern, queue, self.name)
+            UnsubscribeFromEventWorker.async_unsubscribe(ping_pattern, queue, self.name)
           end
         end
       end
@@ -111,7 +111,7 @@ module Donaghy
   private
 
     def global_publish(path, opts = {})
-      Donaghy::EventDistributerWorker.perform_async(path, event_from_options(path, opts).to_hash)
+      Donaghy.root_queue.publish(event_from_options(path, opts))
     end
 
     def event_from_options(path, opts)

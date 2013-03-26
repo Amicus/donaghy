@@ -31,35 +31,43 @@ module Donaghy
 
     it "should subscribe to pings" do
       [Donaghy.root_event_path, Donaghy.local_service_host_queue].each do |queue|
-        SubscribeToEventWorker.should_receive(:perform_async).with(BaseService.ping_pattern, queue, BaseService.name).once.and_return(true)
+        SubscribeToEventWorker.should_receive(:async_subscribe).with(BaseService.ping_pattern, queue, BaseService.name).once.and_return(true)
       end
       BaseService.subscribe_to_pings
     end
 
     it "should unsubscribe from the host-only pings" do
-      UnsubscribeFromEventWorker.should_receive(:perform_async).with(BaseService.ping_pattern, Donaghy.local_service_host_queue, BaseService.name).once.and_return(true)
+      UnsubscribeFromEventWorker.should_receive(:async_unsubscribe).with(BaseService.ping_pattern, Donaghy.local_service_host_queue, BaseService.name).once.and_return(true)
       BaseService.unsubscribe_host_pings
     end
 
     it "should #root_trigger" do
-      EventDistributerWorker.should_receive(:perform_async).with(event_path, hash_including(payload: "cool")).and_return(true)
+      mock_queue = mock(:queue, publish: true)
+      Donaghy.stub(:root_queue).and_return(mock_queue)
+      mock_queue.should_receive(:publish).with(an_instance_of(Event)).and_return(true)
       base_service.root_trigger(event_path, payload: "cool")
     end
 
     it "should #trigger" do
-      EventDistributerWorker.should_receive(:perform_async).with("#{root_path}/base_service/#{event_path}", hash_including(payload: "cool")).and_return(true)
-      base_service.trigger(event_path, payload: "cool")
+      mock_queue = mock(:queue, publish: true)
+      Donaghy.stub(:root_queue).and_return(mock_queue)
+      mock_queue.should_receive(:publish) do |event|
+        event.path.should == "#{root_path}/base_service/#{event_path}"
+        event.payload.cool.should be_true
+        true
+      end
+      base_service.trigger(event_path, payload: {cool: true})
     end
 
     it "should BaseService.subscribe_to_global_events" do
-      SubscribeToEventWorker.should_receive(:perform_async).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
+      SubscribeToEventWorker.should_receive(:async_subscribe).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
       BaseService.subscribe_to_global_events
     end
 
     it "should BaseService.unsubscribe_all_instances" do
-      UnsubscribeFromEventWorker.should_receive(:perform_async).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
+      UnsubscribeFromEventWorker.should_receive(:async_unsubscribe).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
       [Donaghy.local_service_host_queue, root_path].each do |ping_queue|
-        UnsubscribeFromEventWorker.should_receive(:perform_async).with(BaseService.ping_pattern, ping_queue, BaseService.name).once.and_return(true)
+        UnsubscribeFromEventWorker.should_receive(:async_unsubscribe).with(BaseService.ping_pattern, ping_queue, BaseService.name).once.and_return(true)
       end
       BaseService.unsubscribe_all_instances
     end
