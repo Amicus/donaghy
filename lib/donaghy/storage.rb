@@ -7,11 +7,11 @@ module Donaghy
 
       end
 
-      def puts
+      def put
 
       end
 
-      def gets
+      def get
 
       end
 

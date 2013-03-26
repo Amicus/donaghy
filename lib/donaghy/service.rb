@@ -59,10 +59,6 @@ module Donaghy
         "#{Donaghy.configuration[:name]}/#{self.name.underscore}/ping*"
       end
 
-      def redis_ping_pattern
-        ping_pattern.gsub(/\*$/, '/redis')
-      end
-
     end
 
     #sidekiq method distributor
@@ -113,17 +109,6 @@ module Donaghy
           version: self.class.service_version,
           configuration: Donaghy.configuration.to_hash
       })
-    end
-
-    def redis_ping(path, evt)
-      reply_queue = evt.payload['reply_to']
-      event = Event.from_hash(payload: {
-          id: evt.payload['id'],
-          received_at: Time.now.utc,
-          version: self.class.service_version,
-          configuration: Donaghy.configuration.to_hash
-      })
-      Donaghy.redis.with {|conn| conn.rpush(reply_queue, JSON.dump(event.to_hash))}
     end
 
   private

@@ -49,6 +49,15 @@ module Donaghy
         end
       end
 
+      def dec(key)
+        raise NotAnIntegerError if get(key) && !get(key).is_a?(Integer)
+        if get(key)
+          put(key, get(key) - 1)
+        else
+          put(key, 0)
+        end
+      end
+
     end
   end
 end

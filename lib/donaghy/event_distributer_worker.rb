@@ -13,10 +13,7 @@ module Donaghy
       QueueFinder.new(path).find.each do |queue_and_class|
         logger.info("sending to #{queue_and_class.inspect}")
 
-        Donaghy.queue_for(queue_and_class[:queue]).publish({
-            class: queue_and_class[:class_name],
-            args: [path, event_hash.to_hash]
-        })
+        Donaghy.queue_for(queue_and_class[:queue]).publish(Event.from_hash(event_hash.merge(class: queue_and_class[:class])))
       end
     end
 
