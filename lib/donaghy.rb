@@ -69,6 +69,19 @@ module Donaghy
     message_queue.find_by_name(name)
   end
 
+  def self.default_queue
+    return @default_queue if @default_queue
+    CONFIG_GUARD.synchronize do
+      @default_queue = queue_for(default_queue_name) unless @default_queue
+    end
+    @default_queue
+  end
+
+  def self.default_queue_name
+    configuration[:queue_name] || configuration[:name] || "donaghy#{rand(5000)}"
+  end
+
+
   def self.root_queue
     return @root_queue if @root_queue
     CONFIG_GUARD.synchronize do
@@ -105,14 +118,14 @@ module Donaghy
   def self.default_config
     {
         name: "donaghy_root",
-        concurrency: 25,
+        concurrency: 4,
         storage: :in_memory,
         message_queue: :sqs
     }
   end
 
   def self.reset
-    @root_queue = @configuration = @storage = @message_queue = @logger = @event_publisher = nil
+    @root_queue = @default_queue = @configuration = @storage = @message_queue = @logger = @event_publisher = nil
   end
 
 end
@@ -129,10 +142,12 @@ require 'donaghy/logging'
 require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
-require 'donaghy/event_distributer_worker'
+require 'donaghy/remote_distributor'
 require 'donaghy/subscribe_to_event_worker'
 require 'donaghy/unsubscribe_from_event_worker'
 require 'donaghy/listener_serializer'
 require 'donaghy/event_publisher'
 
 require 'donaghy/fetcher'
+require 'donaghy/event_handler'
+require 'donaghy/manager'

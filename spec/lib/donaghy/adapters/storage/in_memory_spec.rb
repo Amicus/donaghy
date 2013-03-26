@@ -14,7 +14,7 @@ module Donaghy
        it "should add to set" do
          subject.add_to_set('key', :a)
          subject.add_to_set('key', :a)
-         subject.get('key').should == [:a]
+         subject.get('key').should == [:a, :a]
        end
 
     end

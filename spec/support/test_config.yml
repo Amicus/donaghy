@@ -1,18 +1,3 @@
-redis:
-  hosts:
-    - host: localhost
-      port: 6379
-zk:
-  hosts:
-    - localhost:21811 # this is ZK_SPEC_SERVER_PORT
-redis_failover:
-  max_failures: 2
-  node_strategy: majority
-  failover_strategy: latency
-  required_node_managers: 1
-  nodes:
-    - host: localhost
-      port: 6379
 concurrency: 10
 name: "donaghy_test"
 queue_name: "donaghy_test"

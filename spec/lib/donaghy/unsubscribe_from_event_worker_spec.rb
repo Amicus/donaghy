@@ -11,7 +11,7 @@ module Donaghy
     let(:event_path) { "/event_path/test_service/test_event/" }
     let(:queue) { "test_service_queue" }
     let(:class_name) { "test_class_name" }
-    let(:subscription_event) do
+    let(:unsubscribe_event) do
       Event.from_hash({
           payload: {
               event_path: event_path,
@@ -21,14 +21,11 @@ module Donaghy
       })
     end
 
-    let(:unsubscribe_event) do
-      subscription_event.dup
-    end
 
     it "should save serialized event data to redis set" do
       serialized_event_data = ListenerSerializer.dump(queue: queue, class_name: class_name)
 
-      subscribe_event_worker.handle_subscribe("donaghy/subscribe_to_path", subscription_event)
+      subscribe_event_worker.subscribe_to_event(event_path, queue, class_name)
       is_member?(event_path, serialized_event_data).should be_true
 
       subject.handle_unsubscribe("donaghy/unsubscribe_from_path", unsubscribe_event)

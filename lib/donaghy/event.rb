@@ -1,3 +1,5 @@
+require 'hashie/mash'
+
 module Donaghy
 
   class Event
@@ -54,6 +56,10 @@ module Donaghy
 
     def ==(other)
       (ATTRIBUTE_METHODS - [:generated_at, :target]).inject(true) {|accum, method| accum && self.send(method) == other.send(method) }
+    end
+
+    def acknowledge
+      #to be implemented by the MessageQueue adapter
     end
 
   end
