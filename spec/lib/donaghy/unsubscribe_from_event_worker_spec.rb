@@ -6,25 +6,37 @@ module Donaghy
 
     let(:subscribe_event_worker) { SubscribeToEventWorker.new }
     subject { UnsubscribeFromEventWorker.new }
-    let(:redis) { Donaghy.redis }
+
+    let(:event_worker) { SubscribeToEventWorker.new }
+    let(:event_path) { "/event_path/test_service/test_event/" }
+    let(:queue) { "test_service_queue" }
+    let(:class_name) { "test_class_name" }
+    let(:subscription_event) do
+      Event.from_hash({
+          payload: {
+              event_path: event_path,
+              queue: queue,
+              class_name: class_name,
+          }
+      })
+    end
+
+    let(:unsubscribe_event) do
+      subscription_event.dup
+    end
 
     it "should save serialized event data to redis set" do
-      event_path = "/event_path/test_service/test_event/"
-      queue = "test_service_queue"
-      class_name = "test_class_name"
-
       serialized_event_data = ListenerSerializer.dump(queue: queue, class_name: class_name)
 
-      subscribe_event_worker.perform(event_path, queue, class_name)
+      subscribe_event_worker.handle_subscribe("donaghy/subscribe_to_path", subscription_event)
       is_member?(event_path, serialized_event_data).should be_true
-      subject.perform(event_path, queue, class_name)
+
+      subject.handle_unsubscribe("donaghy/unsubscribe_from_path", unsubscribe_event)
       is_member?(event_path, serialized_event_data).should be_false
     end
 
     def is_member?(event_path, serialized_event_data)
-      Donaghy.redis.with do |redis|
-        redis.sismember("donaghy_#{event_path}", serialized_event_data)
-      end
+      Donaghy.storage.get("donaghy_#{event_path}").include?(serialized_event_data)
     end
 
 

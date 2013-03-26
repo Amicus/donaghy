@@ -1,3 +1,5 @@
+require 'aws-sdk'
+
 module Donaghy
   class SQSEvent < Event
 
@@ -5,12 +7,13 @@ module Donaghy
     def self.from_sqs(sqs_message)
       evt = from_json(sqs_message.body)
       evt.sqs_message = sqs_message
+      return evt
     end
 
   end
 
   module Queue
-    class SQS
+    class Sqs
 
       def self.find_by_name(queue_name)
         new(queue_name)
@@ -22,12 +25,12 @@ module Donaghy
         @queue = sqs.queues.create(queue_name)
       end
 
-      def publish(hash)
-        queue.send_message(Event.from_hash(hash).to_json)
+      def publish(evt)
+        queue.send_message(evt.to_json)
       end
 
       def receive
-        SQSEvent.new(queue.receive_message)
+        SQSEvent.from_sqs(queue.receive_message)
       end
 
     private

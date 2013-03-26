@@ -1,5 +1,5 @@
 require 'monitor'
-require 'logger'
+require 'celluloid'
 
 module Donaghy
   ROOT_QUEUE = "global_event"
@@ -28,24 +28,15 @@ module Donaghy
   def self.logger
     return @logger if @logger
     CONFIG_GUARD.synchronize do
-      @logger = Logger.new($stdout) unless @logger
+      @logger = Celluloid.logger unless @logger
     end
     @logger
   end
 
   def self.logger=(logger)
     CONFIG_GUARD.synchronize do
-      @logger = logger
+      @logger = Celluloid.logger = logger
     end
-  end
-
-  def self.server
-    return @server if @server
-    CONFIG_GUARD.synchronize do
-      @server = Server.new unless @server
-    end
-    @server
-
   end
 
   def self.storage
@@ -120,7 +111,6 @@ require 'active_support/core_ext/string/inflections'
 require 'configliere'
 
 require 'donaghy/configuration'
-require 'donaghy/fetcher'
 require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
@@ -128,7 +118,6 @@ require 'donaghy/event_distributer_worker'
 require 'donaghy/subscribe_to_event_worker'
 require 'donaghy/unsubscribe_from_event_worker'
 require 'donaghy/listener_serializer'
-require 'donaghy/server'
 require 'donaghy/event_publisher'
 require 'donaghy/storage'
 

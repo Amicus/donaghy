@@ -6,8 +6,9 @@ module Donaghy
     before do
       class BaseService
         include Donaghy::Service
+
         class_attribute :handler
-        self.handler = Queue.new
+        self.handler = ::Queue.new
 
         receives "sweet/*", :handle_sweet_pie
 

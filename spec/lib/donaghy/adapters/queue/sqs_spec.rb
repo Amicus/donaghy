@@ -3,11 +3,11 @@ require 'donaghy/adapters/queue/sqs'
 
 module Donaghy
   module Queue
-    describe SQS do
+    describe Sqs do
 
       it "should publish and receive an event" do
-        queue = SQS.find_by_name("test")
-        queue.publish(payload: {cool:true})
+        queue = Sqs.find_by_name("test")
+        queue.publish(Event.from_hash(payload: {cool:true}))
         message = queue.receive
         message.payload.cool.should == true
       end

@@ -37,7 +37,7 @@ module Donaghy
       end
 
       def remove_from_set(key, value)
-        storage_hash(key).delete(value)
+        get(key).delete(value)
       end
 
       def inc(key)

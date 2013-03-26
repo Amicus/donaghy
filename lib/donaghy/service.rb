@@ -26,7 +26,6 @@ module Donaghy
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.root_event_path, self.name]}"
-          global_publish
           SubscribeToEventWorker.perform_async(pattern, Donaghy.root_event_path, self.name)
         end
       end
@@ -63,9 +62,7 @@ module Donaghy
 
     #sidekiq method distributor
     def perform(path, event_hash)
-      if path == self.class.redis_ping_pattern
-        redis_ping(path, Event.from_hash(event_hash))
-      elsif File.fnmatch(self.class.ping_pattern, path)
+      if File.fnmatch(self.class.ping_pattern, path)
         donaghy_ping(path, Event.from_hash(event_hash))
       else
         receives_hash.each_pair do |pattern, meth_and_options|
