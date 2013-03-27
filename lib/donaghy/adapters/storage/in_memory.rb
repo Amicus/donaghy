@@ -25,6 +25,12 @@ module Donaghy
         storage_hash[key]
       end
 
+      def unset(key)
+        lock.synchronize do
+          storage_hash.delete(key)
+        end
+      end
+
       def add_to_set(key, value)
         if get(key) and !(get(key).respond_to?(:uniq) or get(key).respond_to?(:push))
           raise NotAnEnumerableError
@@ -32,13 +38,7 @@ module Donaghy
         lock.synchronize do
           arry = get(key) || []
           arry.push(value)
-          put(key, arry)
-        end
-      end
-
-      def unset(key)
-        lock.synchronize do
-          storage_hash.delete(key)
+          put(key, arry.uniq)
         end
       end
 
@@ -48,24 +48,24 @@ module Donaghy
         end
       end
 
-      def inc(key)
+      def inc(key, val=1)
         raise NotAnIntegerError if get(key) && !get(key).is_a?(Integer)
         lock.synchronize do
           if get(key)
-            put(key, get(key) + 1)
+            put(key, get(key) + val)
           else
-            put(key, 1)
+            put(key, val)
           end
         end
       end
 
-      def dec(key)
+      def dec(key, val=1)
         raise NotAnIntegerError if get(key) && !get(key).is_a?(Integer)
         lock.synchronize do
           if get(key)
-            put(key, get(key) - 1)
+            put(key, get(key) - val)
           else
-            put(key, 0)
+            put(key, val)
           end
         end
       end
