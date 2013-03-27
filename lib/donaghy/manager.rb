@@ -9,7 +9,7 @@ module Donaghy
 
     trap_exit :event_handler_or_fetcher_died
 
-    attr_reader :busy, :available, :fetcher, :stopped, :queue
+    attr_reader :supervisor, :busy, :available, :fetcher, :stopped, :queue
     def initialize(opts = {})
       @busy = []
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do

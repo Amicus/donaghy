@@ -52,6 +52,14 @@ module Donaghy
     end
   end
 
+  def self.local_storage
+    return @local_storage if @local_storage
+    CONFIG_GUARD.synchronize do
+      return @local_storage if @local_storage
+      @local_storage = Donaghy::Storage::InMemory.new
+    end
+  end
+
   def self.message_queue
     return @message_queue if @message_queue
     CONFIG_GUARD.synchronize do
@@ -110,14 +118,16 @@ module Donaghy
   def self.default_config
     {
         name: "donaghy_root",
-        concurrency: 4,
+        concurrency: Celluloid.cores,
+        system_concurrency: Celluloid.cores,
         storage: :in_memory,
         message_queue: :sqs
     }
   end
 
+  #this is used mostly for testing
   def self.reset
-    @configuration = @storage = @message_queue = @logger = @event_publisher = nil
+    @configuration = @storage = @local_storage = @message_queue = @logger = @event_publisher = nil
   end
 
 end
@@ -135,7 +145,7 @@ require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
 require 'donaghy/remote_distributor'
-require 'donaghy/subscribe_to_event_worker'
+require 'donaghy/event_subscriber'
 require 'donaghy/unsubscribe_from_event_worker'
 require 'donaghy/listener_serializer'
 require 'donaghy/event_publisher'

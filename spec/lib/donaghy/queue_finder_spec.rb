@@ -6,27 +6,11 @@ module Donaghy
     let(:event_path) { "blah/cool" }
     let(:queue) { "testQueue" }
     let(:class_name) { "KlassHandler" }
-    let(:queue_finder) { QueueFinder.new(event_path)}
-
-    let(:subscription_event) do
-      Event.from_hash({
-          payload: {
-              event_path: event_path,
-              queue: queue,
-              class_name: class_name,
-          }
-      })
-    end
+    let(:queue_finder) { QueueFinder.new(event_path, Donaghy.local_storage)}
 
     before do
       #setup the listener
-      SubscribeToEventWorker.new.handle_subscribe("donaghy/subscribe_to_path", subscription_event)
-    end
-
-    it "should QueueFinder.all_listeners" do
-      QueueFinder.all_listeners.should == {
-          event_path => [{queue: queue, class_name: class_name}]
-      }
+      EventSubscriber.new.subscribe(event_path, queue, class_name)
     end
 
     describe "#find" do
@@ -43,18 +27,10 @@ module Donaghy
 
       describe "with a wildcard" do
         let(:results) { queue_finder.find }
-        let(:wildcard_subscription_event) do
-          Event.from_hash({
-              payload: {
-                  event_path: "bla*/c*",
-                  queue: queue,
-                  class_name: class_name,
-              }
-          })
-        end
+        let(:wildcard_path) { "bla*/c*" }
 
         before do
-          SubscribeToEventWorker.new.handle_subscribe("donaghy/subscribe_to_path", wildcard_subscription_event)
+          EventSubscriber.new.subscribe(wildcard_path, queue, class_name)
         end
 
         it "should find two" do
