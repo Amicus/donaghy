@@ -20,46 +20,52 @@ module Donaghy
     class Sqs
       include Logging
 
-      def self.find_by_name(queue_name)
-        new(queue_name)
+      class SqsQueue
+
+        attr_reader :queue, :queue_name, :opts, :sqs
+        def initialize(queue_name, opts = {})
+          @opts = opts
+          @sqs = opts[:sqs]
+          @queue_name = queue_name
+          @queue = sqs.queues.create(queue_name)
+        end
+
+        def name
+          queue_name
+        end
+
+        def publish(evt)
+          queue.send_message(evt.to_json)
+        end
+
+        def receive
+          message = queue.receive_message
+          return SQSEvent.from_sqs(message) if message
+        end
+
+        def destroy
+          queue.delete
+        end
+
+        def exists?
+          queue.exists?
+        end
+
       end
 
-      attr_reader :queue, :queue_name
-      def initialize(queue_name, opts = {})
-        @queue_name = queue_name
-        @queue = sqs.queues.create(queue_name)
+      attr_reader :opts
+      def initialize(opts = {})
+        @opts = opts
       end
 
-      def name
-        queue_name
-      end
-
-      def publish(evt)
-        queue.send_message(evt.to_json)
-      end
-
-      def receive
-        message = queue.receive_message
-        return SQSEvent.from_sqs(message) if message
-      end
-
-      def destroy
-        queue.delete
-      end
-
-      def exists?
-        queue.exists?
+      def find_by_name(queue_name)
+        SqsQueue.new(queue_name, sqs: sqs)
       end
 
     private
       def sqs
-        @sqs ||= AWS::SQS.new({
-          access_key_id: 'YOUR_ACCESS_KEY_ID',
-          secret_access_key: 'YOUR_SECRET_ACCESS_KEY',
-          sqs_endpoint: "localhost",
-          sqs_port: '9324',
-          use_ssl: false,
-        })
+        config_hash = opts.dup.delete_if {|k,v| v.nil? }
+        @sqs ||= AWS::SQS.new(config_hash)
       end
 
     end

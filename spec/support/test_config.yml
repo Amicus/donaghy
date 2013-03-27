@@ -1,4 +1,11 @@
 concurrency: 10
+message_queue:
+  - :sqs
+  - access_key_id: nada
+    secret_access_key: nada
+    sqs_endpoint: localhost
+    sqs_port: 9324
+    use_ssl: false
 name: "donaghy_test"
 queue_name: "donaghy_test"
 services:

@@ -46,6 +46,8 @@ module Donaghy
       case configuration[:storage]
       when String, Symbol
         @storage = "Donaghy::Storage::#{configuration[:storage].to_s.camelize}".constantize.new
+      when Array
+        @storage = "Donaghy::Storage::#{configuration[:storage].first.to_s.camelize}".constantize.new(*configuration[:storage][1..-1])
       else
         @storage = configuration[:storage]
       end
@@ -66,7 +68,9 @@ module Donaghy
       return @message_queue if @message_queue
       case configuration[:message_queue]
       when String, Symbol
-        @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].to_s.camelize}".constantize
+        @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].to_s.camelize}".constantize.new
+      when Array
+        @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].first.to_s.camelize}".constantize.new(*configuration[:message_queue][1..-1])
       else
         @message_queue = configuration[:message_queue]
       end
