@@ -3,26 +3,33 @@ module Donaghy
 
     class Abstract
 
-      def initialize
+      attr_reader :storage_hash, :lock
+        def initialize
+        end
 
-      end
+        def flush!
+        end
 
-      def put
+        def put(key, val)
+        end
 
-      end
+        def get(key)
+        end
 
-      def get
+        def add_to_set(key, value)
+        end
 
-      end
+        def unset(key)
+        end
 
-      def inc
+        def remove_from_set(key, value)
+        end
 
-      end
+        def inc(key)
+        end
 
-      def dec
-
-      end
-
+        def dec(key)
+        end
     end
 
   end
