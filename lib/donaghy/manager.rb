@@ -7,7 +7,7 @@ module Donaghy
     include Celluloid
     include Logging
 
-    trap_exit :event_handler_or_fetcher_died
+    trap_exit :event_handler_died
 
     attr_reader :supervisor, :busy, :available, :fetcher, :stopped, :queue
     def initialize(opts = {})
@@ -16,7 +16,7 @@ module Donaghy
         EventHandler.new_link(current_actor)
       end
       @queue = opts[:queue]
-      @fetcher = Fetcher.new_link(current_actor, @queue)
+      @fetcher = Fetcher.new(current_actor, @queue)
     end
 
     def start
@@ -28,7 +28,7 @@ module Donaghy
 
     def stop
       @stopped = true
-      @fetcher.stop_fetching
+      fetcher.stop_fetching if fetcher.alive?
       # do more sidekiq like stuff here
       terminate
       signal(:shutdown)
@@ -47,15 +47,8 @@ module Donaghy
 
     def event_handler_or_fetcher_died(event_handler_or_fetcher, reason)
       logger.warn("handler or fetcher #{event_handler_or_fetcher.inspect} died do to #{reason.class}")
-      case event_handler_or_fetcher
-        when EventHandler
-          @busy.delete(event_handler_or_fetcher)
-          @available << EventHandler.new_link(current_actor)
-        when Fetcher
-          @fetcher = Fetcher.new_link(current_actor, opts[:queue])
-        else
-          raise "unexpected thing died and ended up in event_handler_died"
-        end
+      @busy.delete(event_handler_or_fetcher)
+      @available << EventHandler.new_link(current_actor)
     end
 
     def event_handler_finished(event_handler)
@@ -70,11 +63,15 @@ module Donaghy
     def handle_event(evt)
       handler = @available.shift
       @busy << handler
-      handler.async.process(evt)
+      handler.async.handle(evt)
     end
 
     def assign_work
-      fetcher.async.fetch
+      if fetcher.alive?
+        fetcher.async.fetch
+      else
+        Fetcher.new(current_actor, @queue).async.fetch
+      end
     end
 
   end

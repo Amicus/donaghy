@@ -146,7 +146,7 @@ require 'donaghy/event'
 require 'donaghy/queue_finder'
 require 'donaghy/remote_distributor'
 require 'donaghy/event_subscriber'
-require 'donaghy/unsubscribe_from_event_worker'
+require 'donaghy/event_unsubscriber'
 require 'donaghy/listener_serializer'
 require 'donaghy/event_publisher'
 

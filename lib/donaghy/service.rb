@@ -26,26 +26,26 @@ module Donaghy
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.root_event_path, self.name]}"
-          SubscribeToEventWorker.async_subscribe(pattern, Donaghy.root_event_path, self.name)
+          EventSubscriber.new.subscribe(pattern, Donaghy.root_event_path, self.name)
         end
       end
 
       def subscribe_to_pings
-        SubscribeToEventWorker.async_subscribe(ping_pattern, Donaghy.root_event_path, self.name)
-        SubscribeToEventWorker.async_subscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
+        EventSubscriber.new.subscribe(ping_pattern, Donaghy.root_event_path, self.name)
+        EventSubscriber.new.subscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
       end
 
       def unsubscribe_host_pings
-        UnsubscribeFromEventWorker.async_unsubscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
+        EventUnsubscriber.new.unsubscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
       end
 
       #this is for shutting down a service for good
       def unsubscribe_all_instances
         receives_hash.each_pair do |pattern, meth_and_options|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.root_event_path, self.name]}"
-          UnsubscribeFromEventWorker.async_unsubscribe(pattern, Donaghy.root_event_path, self.name)
+          EventUnsubscriber.new.unsubscribe(pattern, Donaghy.root_event_path, self.name)
           [Donaghy.root_event_path, Donaghy.local_service_host_queue].each do |queue|
-            UnsubscribeFromEventWorker.async_unsubscribe(ping_pattern, queue, self.name)
+            EventUnsubscriber.new.unsubscribe(ping_pattern, queue, self.name)
           end
         end
       end
@@ -61,13 +61,21 @@ module Donaghy
     end
 
     #sidekiq method distributor
-    def perform(path, event_hash)
-      if File.fnmatch(self.class.ping_pattern, path)
-        donaghy_ping(path, Event.from_hash(event_hash))
+    def distribute_event(event)
+      if File.fnmatch(self.class.ping_pattern, event.path)
+        donaghy_ping(event.path, event)
       else
         receives_hash.each_pair do |pattern, meth_and_options|
-          if File.fnmatch(pattern, path)
-            send(meth_and_options[:method].to_sym, path, Event.from_hash(event_hash))
+          if File.fnmatch(pattern, event.path)
+            meth = method(meth_and_options[:method].to_sym)
+            # this is in here to support path, event which is unnecessary if you're just sending events around
+            # as they have a path method
+            if meth.arity == 1
+              send(meth_and_options[:method].to_sym, event)
+            else
+              logger.warn("DEPRECATION WARNING: #{meth_and_options[:method]} on #{self.class.to_s} still takes (path, event) when it shold only take (event)")
+              send(meth_and_options[:method].to_sym, event.path, event)
+            end
           end
         end
       end

@@ -21,8 +21,13 @@ module Donaghy
 
     # we need to optimize this - but there ain't no event paths right now
     def matching_paths
-      storage.get("donaghy_event_paths").select do |registered_path|
-        File.fnmatch(registered_path, path)
+      event_paths = storage.get("donaghy_event_paths")
+      if event_paths and event_paths.respond_to?(:select)
+        event_paths.select do |registered_path|
+          File.fnmatch(registered_path, path)
+        end
+      else
+        []
       end
     end
 

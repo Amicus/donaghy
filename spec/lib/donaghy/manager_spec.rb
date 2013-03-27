@@ -15,32 +15,29 @@ module Donaghy
       self.finished = Queue.new
       receives "donaghy/test_worker", :handle_done
 
-      def handle_done(path, evt)
+      def handle_done(evt)
         self.class.finished.push(evt)
       end
 
     end
 
     before do
-      EventSubscriber.new.subscribe(event_path, queue_name, class_name)
+      TestWorker.subscribe_to_global_events
       manager.start
     end
 
     after do
-      manager.stop
-      manager.wait_for_shutdown if manager.alive?
+      if manager.alive?
+        manager.async.stop
+        manager.wait_for_shutdown
+      end
     end
 
     it "should publish the message" do
       Donaghy.default_queue.publish(Event.from_hash(path: event_path, payload: {cool: true }))
-      Timeout.timeout(1) do
-        TestWorker.finished.pop.payload.should == {cool: true}
+      Timeout.timeout(2) do
+        TestWorker.finished.pop.payload.cool.should be_true
       end
     end
-
-
-
-
-
   end
 end

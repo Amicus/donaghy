@@ -1,13 +1,23 @@
 module Donaghy
-  class UnsubscribeFromEventWorker
+  class EventUnsubscriber
     include Donaghy::Service
     donaghy_options = {:queue => ROOT_QUEUE}
 
     EVENT_PATH = "donaghy/unsubscribe_from_path"
     receives EVENT_PATH, :handle_unsubscribe
 
-    def self.async_unsubscribe(event_path, queue, class_name)
-      Donaghy.default_queue.publish(Event.from_hash({
+    def unsubscribe(event_path, queue, class_name)
+      global_unsubscribe(event_path, queue, class_name)
+      local_unsubscribe(event_path, queue, class_name)
+    end
+
+    def local_unsubscribe(event_path, queue, class_name)
+      Donaghy.local_storage.remove_from_set("donaghy_#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
+      Donaghy.local_storage.remove_from_set("donaghy_event_paths", event_path)
+    end
+
+    def global_unsubscribe(event_path, queue, class_name)
+      Donaghy.root_queue.publish(Event.from_hash({
           path: EVENT_PATH,
           payload: {
               event_path: event_path,
