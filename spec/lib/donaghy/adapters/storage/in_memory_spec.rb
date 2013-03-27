@@ -7,6 +7,12 @@ module Donaghy
     describe InMemory do
       let(:key) { 'key' }
 
+      it "should flush" do
+        subject.put(key, true)
+        subject.flush
+        subject.get(key).should be_nil
+      end
+
       it "should put and get" do
         subject.put(key, true)
         subject.get(key).should be_true

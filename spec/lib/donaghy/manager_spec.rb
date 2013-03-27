@@ -1,7 +1,8 @@
 require 'spec_helper'
+require 'donaghy/manager'
 
 module Donaghy
-  #this is going to end up being more of an integration test
+  #this is going to end up being more of an integration test along with the node_spec
   describe Manager do
     let(:manager) { Manager.new(concurrency: 1, queue: Donaghy.default_queue) }
 
@@ -28,10 +29,29 @@ module Donaghy
 
     after do
       if manager.alive?
-        manager.async.stop
-        manager.wait_for_shutdown
+        (manager.future.stop).value
       end
     end
+
+
+    describe "error states" do
+      let(:my_event) do
+        Event.from_hash({
+            path: "donaghy/to/nowhere",
+        })
+      end
+
+      it "should requeue messages when stopped an an something tries to handle work" do
+        # kind hacky we're gonna set stopped but not terminate so that the test is accurately reproducing
+        # the race condition where we've called stop then the fetcher tries to call into the manager
+        # we're going to use an unstarted manager so that stopped? is true
+        my_event.should_receive(:requeue).once
+        Celluloid.logger.info("calling handle event with my_event")
+        stopped_manager = Manager.new()
+        stopped_manager.handle_event(my_event)
+      end
+    end
+
 
     it "should publish the message" do
       Donaghy.default_queue.publish(Event.from_hash(path: event_path, payload: {cool: true }))

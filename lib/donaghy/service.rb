@@ -7,11 +7,13 @@ module Donaghy
 
   module Service
 
+    SIDEKIQ_EVENT_PREFIX = "donaghy/sidekiq_emulator/"
+
     def self.included(klass)
       klass.class_attribute :donaghy_options
       klass.class_attribute :internal_root_path
       klass.extend(ClassMethods)
-      klass.donaghy_options  = {queue: Donaghy.root_event_path}
+      klass.donaghy_options = {queue: Donaghy.root_event_path}
     end
 
     module ClassMethods
@@ -21,6 +23,11 @@ module Donaghy
 
       def receives(pattern, meth, opts = {})
         receives_hash[pattern] = {method: meth, options: opts}
+      end
+
+      def perform_async(*args)
+        instance = new()
+        instance.perform_async(*args)
       end
 
       def subscribe_to_global_events
@@ -79,6 +86,14 @@ module Donaghy
           end
         end
       end
+    end
+
+    def sidekiq_emulator_path
+      "#{Donaghy.root_event_path}/#{SIDEKIQ_EVENT_PREFIX}#{self.class.to_s.underscore}"
+    end
+
+    def perform_async(*args)
+      root_trigger(sidekiq_emulator_path, payload: {args: args})
     end
 
     def receives_hash

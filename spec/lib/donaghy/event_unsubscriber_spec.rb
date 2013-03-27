@@ -28,11 +28,9 @@ module Donaghy
         subscribe_event_worker.global_subscribe_to_event(event_path, queue, class_name)
         is_member?(Donaghy.storage, event_path, serialized_event_data).should be_true
 
-        subject.handle_unsubscribe("donaghy/unsubscribe_from_path", unsubscribe_event)
+        subject.handle_unsubscribe(unsubscribe_event)
         is_member?(Donaghy.storage, event_path, serialized_event_data).should be_false
       end
-
-
     end
 
     describe "local unsubscribe" do

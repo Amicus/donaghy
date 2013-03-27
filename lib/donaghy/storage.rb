@@ -7,7 +7,7 @@ module Donaghy
         def initialize
         end
 
-        def flush!
+        def flush
         end
 
         def put(key, val)

@@ -12,10 +12,21 @@ module Donaghy
         message.payload.cool.should == true
       end
 
-      it "should create a queue when one does not exist" do
-        queue = Sqs.find_by_name("testhead")
-        queue.exists?.should be_true
-        queue.destroy
+      describe "regular queue characteristics" do
+        let!(:queue) { Sqs.find_by_name("testhead") }
+
+        after do
+          queue.destroy
+        end
+
+        it "should create a queue when one does not exist" do
+         queue.exists?.should be_true
+        end
+
+        it "should have a name" do
+          queue.name.should == 'testhead'
+        end
+
       end
 
     end

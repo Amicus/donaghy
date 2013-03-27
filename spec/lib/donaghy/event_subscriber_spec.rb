@@ -32,11 +32,10 @@ module Donaghy
 
     describe "when receiving a remote event to handle a subscription" do
       it "should save serialized event data to storage set" do
-        event_worker.handle_subscribe("donaghy/subscribe_to_path", subscription_event)
+        event_worker.handle_subscribe(subscription_event)
         assert_has_subscription(Donaghy.storage, event_path, serialized_event_data)
       end
     end
-
 
     def assert_has_subscription(storage, path, data)
       storage.get("donaghy_#{path}").should include(data)

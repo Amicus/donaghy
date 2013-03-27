@@ -21,7 +21,7 @@ module Donaghy
     end
 
     it "shouldn't error when no subscription" do
-      Donaghy.storage.flush!
+      Donaghy.storage.flush
       ->() { RemoteDistributor.new.handle_distribution(event) }.should_not raise_error
     end
 

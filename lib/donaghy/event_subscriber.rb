@@ -32,7 +32,7 @@ module Donaghy
     end
 
     # remote - code executed in this process from remote events
-    def handle_subscribe(_, evt)
+    def handle_subscribe(evt)
       payload = evt.payload
       event_path, queue, class_name = payload.event_path, payload.queue, payload.class_name
       global_subscribe_to_event(event_path, queue, class_name)

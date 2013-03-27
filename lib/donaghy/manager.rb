@@ -1,6 +1,7 @@
 require 'celluloid/autostart'
 require 'donaghy/fetcher'
 require 'donaghy/event_handler'
+require "donaghy/remote_distributor"
 
 module Donaghy
   class Manager
@@ -17,6 +18,7 @@ module Donaghy
       end
       @queue = opts[:queue]
       @fetcher = Fetcher.new(current_actor, @queue)
+      @stopped = true
     end
 
     def start
@@ -26,27 +28,22 @@ module Donaghy
       end
     end
 
-    def stop
+    def stop(seconds = 0)
       @stopped = true
       fetcher.stop_fetching if fetcher.alive?
       # do more sidekiq like stuff here
       terminate
-      signal(:shutdown)
+      true
     end
 
     def stopped?
       @stopped
     end
 
-    def wait_for_shutdown
-      wait(:shutdown)
-    end
-
-
   # private to the developer, but not to handlers, etc so can't use private here
 
-    def event_handler_or_fetcher_died(event_handler_or_fetcher, reason)
-      logger.warn("handler or fetcher #{event_handler_or_fetcher.inspect} died do to #{reason.class}")
+    def event_handler_died(event_handler_or_fetcher, reason)
+      logger.warn("handler #{event_handler_or_fetcher.inspect} died do to #{reason.class}")
       @busy.delete(event_handler_or_fetcher)
       @available << EventHandler.new_link(current_actor)
     end
@@ -61,9 +58,13 @@ module Donaghy
     end
 
     def handle_event(evt)
-      handler = @available.shift
-      @busy << handler
-      handler.async.handle(evt)
+      if stopped?
+        evt.requeue
+      else
+        handler = @available.shift
+        @busy << handler
+        handler.async.handle(evt)
+      end
     end
 
     def assign_work

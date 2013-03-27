@@ -10,6 +10,10 @@ module Donaghy
       return evt
     end
 
+    def acknowledge
+      sqs_message.delete
+    end
+
   end
 
   module MessageQueue
@@ -24,6 +28,10 @@ module Donaghy
       def initialize(queue_name, opts = {})
         @queue_name = queue_name
         @queue = sqs.queues.create(queue_name)
+      end
+
+      def name
+        queue_name
       end
 
       def publish(evt)

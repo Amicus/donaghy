@@ -27,7 +27,7 @@ module Donaghy
       }))
     end
 
-    def handle_unsubscribe(_, evt)
+    def handle_unsubscribe(evt)
       payload = evt.payload
       event_path, queue, class_name = payload.event_path, payload.queue, payload.class_name
       logger.warn("UNSUBSCRING #{event_path} from #{queue}, #{class_name}")

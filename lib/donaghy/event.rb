@@ -13,7 +13,7 @@ module Donaghy
     end
 
     # (topper) we use value and timer for sending to errplane (at least)
-    ATTRIBUTE_METHODS = [:version, :payload, :generated_at, :generated_by, :path, :target, :value, :timer]
+    ATTRIBUTE_METHODS = [:version, :payload, :generated_at, :generated_by, :path, :target, :value, :timer, :received_on]
 
     attr_accessor *ATTRIBUTE_METHODS
     def initialize(opts)
@@ -60,6 +60,14 @@ module Donaghy
 
     def acknowledge
       #to be implemented by the MessageQueue adapter
+    end
+
+    def heartbeat
+      # to be implemented by the MessageQueue adapter
+    end
+
+    def requeue
+      (received_on || Donaghy.root_queue).publish(self)
     end
 
   end

@@ -13,7 +13,7 @@ module Donaghy
         @lock = Mutex.new
       end
 
-      def flush!
+      def flush
         @storage_hash = Hashie::Mash.new
       end
 

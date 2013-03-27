@@ -119,7 +119,7 @@ module Donaghy
     {
         name: "donaghy_root",
         concurrency: Celluloid.cores,
-        system_concurrency: Celluloid.cores,
+        cluster_concurrency: Celluloid.cores,
         storage: :in_memory,
         message_queue: :sqs
     }
@@ -149,7 +149,3 @@ require 'donaghy/event_subscriber'
 require 'donaghy/event_unsubscriber'
 require 'donaghy/listener_serializer'
 require 'donaghy/event_publisher'
-
-require 'donaghy/fetcher'
-require 'donaghy/event_handler'
-require 'donaghy/manager'
