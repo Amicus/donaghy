@@ -7,7 +7,6 @@ module Donaghy
       def call(handler, event)
         yield
       rescue Exception => e
-        Donaghy.storage.inc("failed", 1)
         event.retry_count += 1
         if event.retry_count > MAX_RETRY_ATTEMPTS
           logger.warn("event failed over #{MAX_RETRY_ATTEMPTS} times")

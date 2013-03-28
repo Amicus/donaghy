@@ -30,10 +30,6 @@ module Donaghy
          ->() { event_handler.handle(event) }.should raise_error(StandardError)
       end
 
-      it "should inc the failed count and raise the standard error" do
-        Donaghy.storage.get('failed').should == 1
-      end
-
       it "should inc the retry count on the event" do
         event.retry_count.should == 1
       end

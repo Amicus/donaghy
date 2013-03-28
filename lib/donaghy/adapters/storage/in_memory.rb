@@ -44,7 +44,8 @@ module Donaghy
 
       def remove_from_set(key, value)
         lock.synchronize do
-          get(key).delete(value)
+          arry = get(key) || []
+          put(key, (arry - Array(value)))
         end
       end
 
