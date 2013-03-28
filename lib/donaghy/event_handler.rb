@@ -1,6 +1,8 @@
 require 'celluloid/autostart'
 require 'donaghy/middleware/chain'
 require 'donaghy/middleware/stats'
+require 'donaghy/middleware/retry'
+require 'donaghy/middleware/logging'
 
 module Donaghy
   class EventHandler
@@ -9,18 +11,19 @@ module Donaghy
 
     def self.default_middleware
       Middleware::Chain.new do |c|
+        c.add Middleware::Retry
         c.add Middleware::Stats
+        c.add Middleware::Logging
       end
     end
 
-    attr_reader :manager
+    attr_reader :manager, :uid
     def initialize(manager)
       @manager = manager
+      @uid = Celluloid::UUID.generate
     end
 
     def handle(event)
-      logger.info("received: #{event.to_hash.inspect}")
-
       Donaghy.middleware.execute(current_actor, event) do
         local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
         if local_queues.length > 0
@@ -29,10 +32,8 @@ module Donaghy
             class_name.constantize.new.distribute_event(event)
           end
         else
-          logger.info("no local handler, so remote distributing")
           RemoteDistributor.new.handle_distribution(event)
         end
-
         event.acknowledge
       end
       manager.async.event_handler_finished(current_actor)

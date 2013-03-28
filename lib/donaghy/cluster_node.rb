@@ -48,7 +48,7 @@ module Donaghy
         if Object.const_defined?(const_name)
           const_name.constantize
         else
-          logger.warn("we no longer support auto loading of services... please require your classes first")
+          logger.warn("DEPRECATION WARNING: we no longer support auto loading of services... please require your classes first")
           require "#{Dir.pwd}/lib/#{service_name}"
           const_name.constantize
         end
@@ -60,9 +60,9 @@ module Donaghy
       stop
     end
 
-    def stop
+    def stop(seconds = 0)
       futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
-        manager.future.stop
+        manager.future.stop(seconds)
       end
 
       configured_services.each do |klass|

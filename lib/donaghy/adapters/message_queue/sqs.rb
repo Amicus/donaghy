@@ -34,8 +34,9 @@ module Donaghy
           queue_name
         end
 
-        def publish(evt)
-          queue.send_message(evt.to_json)
+        def publish(evt, opts={})
+          opts[:delay_seconds] = opts.delete(:delay) if opts[:delay]
+          queue.send_message(evt.to_json, opts)
         end
 
         def receive

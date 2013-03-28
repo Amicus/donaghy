@@ -140,7 +140,7 @@ module Donaghy
     def event_from_options(path, opts)
       generated_by = Array(opts[:generated_by]).dup
       generated_by.unshift(path)
-      Event.from_hash(path: path, payload: opts[:payload], generated_by: generated_by, target: self)
+      Event.from_hash(path: path, payload: opts[:payload], generated_by: generated_by)
     end
 
     def event_path(path)

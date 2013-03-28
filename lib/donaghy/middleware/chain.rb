@@ -18,6 +18,10 @@ module Donaghy
         links.delete_if {|link| link.klass == klass }
       end
 
+      def clear
+        @links = []
+      end
+
       def exists?(klass)
         links.any? {|link| link.klass == klass }
       end

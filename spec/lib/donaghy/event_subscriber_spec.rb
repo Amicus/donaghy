@@ -31,9 +31,16 @@ module Donaghy
     end
 
     describe "when receiving a remote event to handle a subscription" do
-      it "should save serialized event data to storage set" do
+      before do
         event_worker.handle_subscribe(subscription_event)
+      end
+
+      it "should save serialized event data to storage set" do
         assert_has_subscription(Donaghy.storage, event_path, serialized_event_data)
+      end
+
+      it "should add the queue list to the donaghy_queues" do
+        Donaghy.storage.get("donaghy_queues").should == [queue]
       end
     end
 

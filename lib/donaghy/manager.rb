@@ -37,14 +37,18 @@ module Donaghy
       logger.info("terminating #{available.count} handlers")
       available.each(&:terminate)
       async.internal_stop(seconds)
-      wait(:actually_stopped) if current_actor.alive?
+      if current_actor.alive?
+        Timeout.timeout(seconds+1) do
+          wait(:actually_stopped)
+        end
+      end
       terminate
       true
     end
 
     def internal_stop(seconds=0)
       if busy.empty?
-        logger.info("busy empty, signaling actually stopped")
+        logger.debug("busy empty, signaling actually stopped")
         signal(:actually_stopped)
       else
         after(seconds) do
@@ -66,7 +70,6 @@ module Donaghy
   # private to the developer, but not to handlers, etc so can't use private here
 
     def event_handler_died(event_handler, reason)
-      logger.warn("handler #{event_handler.inspect} died do to #{reason.class}")
       remove_in_progress(event_handler)
       @busy.delete(event_handler)
       unless stopped?
