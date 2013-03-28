@@ -8,11 +8,14 @@ module Donaghy
     include Celluloid
     include Logging
 
+    class AskedToStop; end
+
     trap_exit :event_handler_died
 
-    attr_reader :busy, :available, :fetcher, :stopped, :queue
+    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress
     def initialize(opts = {})
       @busy = []
+      @events_in_progress = {}
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
         EventHandler.new_link(current_actor)
       end
@@ -31,9 +34,29 @@ module Donaghy
     def stop(seconds = 0)
       @stopped = true
       fetcher.stop_fetching if fetcher.alive?
-      # do more sidekiq like stuff here
+      logger.info("terminating #{available.count} handlers")
+      available.each(&:terminate)
+      async.internal_stop(seconds)
+      wait(:actually_stopped) if current_actor.alive?
       terminate
       true
+    end
+
+    def internal_stop(seconds=0)
+      if busy.empty?
+        logger.info("busy empty, signaling actually stopped")
+        signal(:actually_stopped)
+      else
+        after(seconds) do
+          logger.warn("shutting down #{busy.count} still active handlers")
+          busy.each do |busy_handler|
+            events_in_progress[busy_handler.object_id].requeue
+            remove_in_progress(busy_handler)
+            busy_handler.terminate
+          end
+          signal(:actually_stopped)
+        end
+      end
     end
 
     def stopped?
@@ -42,29 +65,42 @@ module Donaghy
 
   # private to the developer, but not to handlers, etc so can't use private here
 
-    def event_handler_died(event_handler_or_fetcher, reason)
-      logger.warn("handler #{event_handler_or_fetcher.inspect} died do to #{reason.class}")
-      @busy.delete(event_handler_or_fetcher)
-      @available << EventHandler.new_link(current_actor)
+    def event_handler_died(event_handler, reason)
+      logger.warn("handler #{event_handler.inspect} died do to #{reason.class}")
+      remove_in_progress(event_handler)
+      @busy.delete(event_handler)
+      unless stopped?
+        @available << EventHandler.new_link(current_actor)
+        assign_work
+      end
     end
 
     def event_handler_finished(event_handler)
       @busy.delete(event_handler)
-      if !event_handler.alive?
+      remove_in_progress(event_handler)
+      if stopped?
+        event_handler.terminate
+      elsif event_handler.alive?
         @available << event_handler
       else
         @available << EventHandler.new_link(current_actor)
       end
+      assign_work unless stopped?
     end
 
     def handle_event(evt)
       if stopped?
         evt.requeue
       else
-        handler = @available.shift
-        @busy << handler
-        handler.async.handle(evt)
+        event_handler = @available.shift
+        @busy << event_handler
+        events_in_progress[event_handler.object_id] = evt
+        event_handler.async.handle(evt)
       end
+    end
+
+    def remove_in_progress(event_handler)
+      events_in_progress.delete(event_handler.object_id)
     end
 
     def assign_work

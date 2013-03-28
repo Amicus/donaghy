@@ -129,9 +129,15 @@ module Donaghy
     }
   end
 
+  def self.middleware
+    @middleware ||= EventHandler.default_middleware
+    yield(@middleware) if block_given?
+    @middleware
+  end
+
   #this is used mostly for testing
   def self.reset
-    @configuration = @storage = @local_storage = @message_queue = @logger = @event_publisher = nil
+    @configuration = @storage = @local_storage = @message_queue = @logger = @event_publisher = @middleware = nil
   end
 
 end
@@ -142,9 +148,8 @@ require 'active_support/core_ext/string/inflections'
 require 'configliere'
 
 require 'donaghy/configuration'
-require 'donaghy/storage'
-require 'donaghy/message_queue'
 require 'donaghy/logging'
+require 'donaghy/middleware/chain'
 require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
@@ -153,3 +158,5 @@ require 'donaghy/event_subscriber'
 require 'donaghy/event_unsubscriber'
 require 'donaghy/listener_serializer'
 require 'donaghy/event_publisher'
+
+require 'donaghy/event_handler'
