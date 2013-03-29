@@ -49,7 +49,7 @@ module Donaghy
 
       it "should send the event to the right class" do
         #TODO: this is a little too integration-y for my liking
-
+        event.should_receive(:heartbeat).at_least(1).times.and_return(true)
         handler.handle(event)
         Timeout.timeout(1) do
           TestWorker.finished.pop.payload[:cool].should be_true

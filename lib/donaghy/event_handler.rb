@@ -18,13 +18,19 @@ module Donaghy
       end
     end
 
-    attr_reader :manager, :uid
-    def initialize(manager)
+    BEAT_TIMEOUT = 5
+
+    attr_reader :manager, :uid, :beat_timeout
+    attr_accessor :beater
+    def initialize(manager, opts = {})
       @manager = manager
       @uid = Celluloid::UUID.generate
+      @beat_timeout = (opts[:heart_beat_timeout] || BEAT_TIMEOUT)
     end
 
     def handle(event)
+      self.beater = HeartBeater.new_link(event, beat_timeout)
+      beater.async.beat
       Donaghy.middleware.execute(current_actor, event) do
         local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
         if local_queues.length > 0
@@ -38,6 +44,13 @@ module Donaghy
         event.acknowledge
       end
       manager.async.event_handler_finished(current_actor)
+    ensure
+      beater.terminate if beater.alive?
+      self.beater = nil
+    end
+
+    def terminate
+      beater.terminate if beater and beater.alive?
     end
 
   end

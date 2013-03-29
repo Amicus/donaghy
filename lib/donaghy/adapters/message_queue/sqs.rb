@@ -14,6 +14,10 @@ module Donaghy
       sqs_message.delete
     end
 
+    def heartbeat(timeout=15)
+      sqs_message.visibility_timeout = timeout
+    end
+
   end
 
   module MessageQueue

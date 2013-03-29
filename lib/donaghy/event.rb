@@ -70,7 +70,7 @@ module Donaghy
       #to be implemented by the MessageQueue adapter
     end
 
-    def heartbeat
+    def heartbeat(timeout=nil)
       # to be implemented by the MessageQueue adapter
     end
 

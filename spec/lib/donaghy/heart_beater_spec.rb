@@ -10,15 +10,14 @@ module Donaghy
     end
 
     let(:timeout) { 1 }
-
     let(:beater) { HeartBeater.new(event, timeout) }
 
     after do
-      beater.stop if beater.alive?
+      beater.terminate if beater.alive?
     end
 
-    it "should beat the event" do
-      event.should_receive(:heartbeat).at_least(1).times.and_return(true)
+    it "should beat the event with a timeout 3x the beaters timeout" do
+      event.should_receive(:heartbeat).with(timeout*3).at_least(1).times.and_return(true)
       beater.beat
     end
 
