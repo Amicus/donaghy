@@ -1,4 +1,5 @@
 require 'celluloid/autostart'
+require 'donaghy/heart_beater'
 require 'donaghy/middleware/chain'
 require 'donaghy/middleware/stats'
 require 'donaghy/middleware/retry'
