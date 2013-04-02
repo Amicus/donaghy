@@ -1,3 +1,4 @@
+require 'celluloid/autostart'
 require "donaghy/sidekiq_runner"
 require "donaghy/manager"
 
