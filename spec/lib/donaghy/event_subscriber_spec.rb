@@ -40,13 +40,13 @@ module Donaghy
       end
 
       it "should add the queue list to the donaghy_queues" do
-        Donaghy.storage.get("donaghy_queues").should == [queue]
+        Donaghy.storage.member_of?("donaghy_queues", queue).should be_true
       end
     end
 
     def assert_has_subscription(storage, path, data)
-      storage.get("donaghy_#{path}").should include(data)
-      storage.get("donaghy_event_paths").should include(path)
+      storage.member_of?("donaghy_#{path}", data).should be_true
+      storage.member_of?("donaghy_event_paths", path).should be_true
     end
 
   end

@@ -12,8 +12,9 @@ module Donaghy
 
     trap_exit :event_handler_died
 
-    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress
+    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name
     def initialize(opts = {})
+      @name = opts[:name] || Celluloid::UUID.generate
       @busy = []
       @events_in_progress = {}
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
@@ -32,15 +33,17 @@ module Donaghy
     end
 
     def stop(seconds = 0)
+      logger.info("manager #{name} is being asked to stop in #{seconds} seconds")
       @stopped = true
-      fetcher.stop_fetching if fetcher.alive?
+      logger.info("manager #{name} async stopping the fetcher")
+      fetcher.async.stop_fetching if fetcher.alive?
       async.internal_stop(seconds)
       if current_actor.alive?
         Timeout.timeout(seconds+10) do
           wait(:actually_stopped)
         end
       end
-      logger.info("manager received actually stopped so we are terminating")
+      logger.info("manager #{name} received actually stopped so we are terminating")
       terminate
       true
     rescue Timeout::Error
@@ -48,17 +51,16 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
-      logger.info("stopping the fetcher")
-      logger.info("terminating #{available.count} handlers")
+      logger.info("manager #{name} terminating #{available.count} handlers")
       available.each do |handler|
         handler.terminate if handler.alive?
       end
       if busy.empty?
-        logger.debug("busy empty, signaling actually stopped")
+        logger.debug("manager #{name} busy empty, signaling actually stopped")
         signal(:actually_stopped)
       else
         after(seconds) do
-          logger.warn("shutting down #{busy.count} still busy handlers")
+          logger.warn("manager #{name} shutting down #{busy.count} still busy handlers")
           busy.each do |busy_handler|
             events_in_progress[busy_handler.object_id].requeue
             remove_in_progress(busy_handler)
@@ -116,7 +118,7 @@ module Donaghy
       if fetcher.alive?
         fetcher.async.fetch
       else
-        Fetcher.new(current_actor, @queue).async.fetch
+        @fetcher = Fetcher.new(current_actor, @queue).async.fetch
       end
     end
 

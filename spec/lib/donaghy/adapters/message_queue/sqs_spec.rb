@@ -4,6 +4,10 @@ require 'donaghy/adapters/message_queue/sqs'
 module Donaghy
   module MessageQueue
     describe Sqs do
+      before do
+        pending "message queue isn't set to sqs" unless Donaghy.configuration[:message_queue] == :sqs
+      end
+
       let(:sqs) { Donaghy.message_queue }
 
       it "should publish and receive an event" do

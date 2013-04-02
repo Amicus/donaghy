@@ -8,6 +8,7 @@ group :test do
   gem 'rb-fsevent', '~> 0.9'
   gem 'guard-rspec'
   gem 'ci_reporter', '~> 1.7.3'
+  gem 'redis', '~> 3.0.1'
   platforms :jruby do
     gem 'torquebox-server', '~> 2.3.0'
     gem 'torquebox-cache', '~> 2.3.0'

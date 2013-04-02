@@ -31,15 +31,15 @@ module Donaghy
         end
 
         it "should inc the complete count" do
-          storage.get('complete').should == 1
+          storage.get('complete').to_i.should == 1
         end
 
         it "should have in progress back down to 0 when its done" do
-          storage.get('inprogress_count').should == 0
+          storage.get('inprogress_count').to_i.should == 0
         end
 
         it "should unset the inprogress id" do
-          storage.get('inprogress').should be_empty
+          Array(storage.get('inprogress')).length.should == 0
         end
 
         it "should remove the inprogress event" do
@@ -66,8 +66,8 @@ module Donaghy
         end
         
         it "should cleanup inprogress" do
-          storage.get('inprogress_count').should == 0
-          storage.get('inprogress').should be_empty
+          storage.get('inprogress_count').to_i.should == 0
+          Array(storage.get('inprogress')).should be_empty
           storage.get("inprogress:#{event.id}").should be_nil
         end
 
@@ -76,11 +76,11 @@ module Donaghy
         end
 
         it "should add the failure id to the failures set" do
-          storage.get('failures').should include(event.id)
+          storage.member_of?('failures', event.id).should be_true
         end
 
         it "should inc the failed count and raise the standard error" do
-          storage.get('failed').should == 1
+          storage.get('failed').to_i.should == 1
         end
 
         describe "on its next successful pass through" do
@@ -96,7 +96,7 @@ module Donaghy
           end
 
           it "should remove the failure id" do
-            storage.get('failures').should_not include(event.id)
+            storage.member_of?('failures', event.id).should be_false
           end
 
           it "should delete the failures json" do

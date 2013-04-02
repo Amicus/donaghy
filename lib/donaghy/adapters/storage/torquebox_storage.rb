@@ -53,6 +53,10 @@ module Donaghy
         end
       end
 
+      def member_of?(key, value)
+        get(key).include?(value)
+      end
+
       def inc(key, val=1)
         storage.transaction do
           @storage.increment(key, val)

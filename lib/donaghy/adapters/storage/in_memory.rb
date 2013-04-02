@@ -49,6 +49,10 @@ module Donaghy
         end
       end
 
+      def member_of?(key, value)
+        get(key).include?(value)
+      end
+
       def inc(key, val=1)
         raise NotAnIntegerError if get(key) && !get(key).is_a?(Integer)
         lock.synchronize do

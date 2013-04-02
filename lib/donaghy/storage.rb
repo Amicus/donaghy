@@ -27,6 +27,10 @@ module Donaghy
 
       def dec(key)
       end
+
+      def member_of?(key, value)
+      end
+
     end
   end
 end

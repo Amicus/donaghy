@@ -46,7 +46,7 @@ module Donaghy
     end
 
     def is_member?(storage, event_path, serialized_event_data)
-      storage.get("donaghy_#{event_path}").include?(serialized_event_data)
+      storage.member_of?("donaghy_#{event_path}", serialized_event_data)
     end
 
 

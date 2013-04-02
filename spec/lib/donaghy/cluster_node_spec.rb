@@ -46,7 +46,7 @@ module Donaghy
 
       it "should receive them even if not subscribed" do
         SomeGuy.perform_async(1,2,3)
-        Timeout.timeout(1) do
+        Timeout.timeout(10) do
           SomeGuy.holder.pop.should == [1,2,3]
         end
       end

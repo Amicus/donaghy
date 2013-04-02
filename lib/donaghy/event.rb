@@ -1,4 +1,5 @@
 require 'hashie/mash'
+require 'json'
 
 module Donaghy
 
