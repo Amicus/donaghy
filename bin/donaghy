@@ -21,6 +21,6 @@ command :run do |c|
   end
 end
 
-trap_exit do
+at_exit do
   $cluster_node.stop if $cluster_node
 end

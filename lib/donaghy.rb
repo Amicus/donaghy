@@ -135,7 +135,7 @@ module Donaghy
         concurrency: Celluloid.cores,
         cluster_concurrency: Celluloid.cores,
         storage: default_storage,
-        message_queue: :sqs
+        message_queue: :redis_queue
     }
   end
 
@@ -144,7 +144,8 @@ module Donaghy
       require 'donaghy/adapters/storage/torquebox_storage'
       :torquebox_storage
     else
-      :in_memory
+      require 'donaghy/adapters/storage/redis_storage'
+      :redis_storage
     end
   end
 
