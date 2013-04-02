@@ -8,7 +8,7 @@ module Donaghy
   class MissingConfigurationFile < StandardError; end
 
   def self.donaghy_env
-    ENV['DONAGHY_ENV'] || (defined?(ClusterFsk) && ClusterFsk.env) || ENV['AMICUS_ENV'] || 'development'
+    ENV['DONAGHY_ENV'] || (defined?(ClusterFsck) && ClusterFsck.env) || ENV['AMICUS_ENV'] || 'development'
   end
 
   def self.configuration
