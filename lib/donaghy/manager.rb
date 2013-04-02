@@ -2,7 +2,6 @@ require 'celluloid/autostart'
 require 'donaghy/fetcher'
 require 'donaghy/event_handler'
 require 'donaghy/remote_distributor'
-require 'donaghy/adapters/storage/in_memory'
 
 module Donaghy
   class Manager

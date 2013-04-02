@@ -167,6 +167,8 @@ require 'active_support/core_ext/string/inflections'
 require 'configliere'
 
 require 'donaghy/configuration'
+#in memory storage is used internally
+require 'donaghy/adapters/storage/in_memory'
 require 'donaghy/logging'
 require 'donaghy/middleware/chain'
 require 'donaghy/service'
