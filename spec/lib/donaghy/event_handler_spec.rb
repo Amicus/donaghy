@@ -14,6 +14,7 @@ module Donaghy
       receives "donaghy/test_worker", :handle_done
 
       def handle_done(evt)
+        sleep 0.001
         self.class.finished.push(evt)
       end
 

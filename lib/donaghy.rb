@@ -124,9 +124,18 @@ module Donaghy
         name: "donaghy_root",
         concurrency: Celluloid.cores,
         cluster_concurrency: Celluloid.cores,
-        storage: :in_memory,
+        storage: default_storage,
         message_queue: :sqs
     }
+  end
+
+  def self.default_storage
+    if defined?(TorqueBox)
+      require 'donaghy/adapters/storage/torquebox_storage'
+      :torquebox_storage
+    else
+      :in_memory
+    end
   end
 
   def self.middleware

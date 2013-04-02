@@ -35,7 +35,6 @@ module Donaghy
       @stopped = true
       fetcher.stop_fetching if fetcher.alive?
       logger.info("terminating #{available.count} handlers")
-      available.each(&:terminate)
       async.internal_stop(seconds)
       if current_actor.alive?
         Timeout.timeout(seconds+1) do
@@ -47,6 +46,9 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
+      available.each do |handler|
+        handler.terminate if handler.alive?
+      end
       if busy.empty?
         logger.debug("busy empty, signaling actually stopped")
         signal(:actually_stopped)
