@@ -33,20 +33,21 @@ module Donaghy
 
     def stop(seconds = 0)
       @stopped = true
-      logger.info("terminating #{available.count} handlers")
       async.internal_stop(seconds)
       if current_actor.alive?
         Timeout.timeout(seconds+1) do
           wait(:actually_stopped)
         end
       end
+      logger.info("manager received actually stopped so we are terminating")
       terminate
       true
     end
 
     def internal_stop(seconds=0)
+      logger.info("stopping the fetcher")
       fetcher.stop_fetching if fetcher.alive?
-
+      logger.info("terminating #{available.count} handlers")
       available.each do |handler|
         handler.terminate if handler.alive?
       end
@@ -55,7 +56,7 @@ module Donaghy
         signal(:actually_stopped)
       else
         after(seconds) do
-          logger.warn("shutting down #{busy.count} still active handlers")
+          logger.warn("shutting down #{busy.count} still busy handlers")
           busy.each do |busy_handler|
             events_in_progress[busy_handler.object_id].requeue
             remove_in_progress(busy_handler)

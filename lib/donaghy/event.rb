@@ -3,6 +3,7 @@ require 'hashie/mash'
 module Donaghy
 
   class Event
+    include Logging
 
     def self.from_json(json)
       from_hash(JSON.load(json))
@@ -61,7 +62,7 @@ module Donaghy
     def to_json(options = {})
       JSON.dump(to_hash(options))
     rescue StandardError => e
-      logger.error("could not to json: #{event.to_hash.inspect}, had error: #{e.inspect} with backtrace: #{e.backtrace.join("\n")}")
+      logger.error("could not to json: #{self.inspect}, had error: #{e.inspect} with backtrace: #{e.backtrace.join("\n")}")
       raise e
     end
 
