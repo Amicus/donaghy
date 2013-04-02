@@ -44,7 +44,7 @@ module Donaghy
         end
 
         def receive
-          message = queue.receive_message(wait_time_seconds: 30)
+          message = queue.receive_message(wait_time_seconds: 20)
           return SQSEvent.from_sqs(message) if message
         end
 
