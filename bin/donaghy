@@ -16,6 +16,7 @@ command :run do |c|
     if File.exist?("config/boot.rb") and File.exist?("config/environment.rb")
       require "config/boot"
       require "config/environment"
+      ::Rails.application.eager_load!
     end
 
     raise "no config file" unless File.exists?("config/donaghy.yml")
