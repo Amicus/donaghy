@@ -16,19 +16,24 @@ module Donaghy
     end
 
     def start
+      logger.debug('cluster node starting up')
       load_classes_and_subscribe_to_events
+      logger.debug('starting cluster manager')
       @cluster_manager.async.start
+      logger.debug('starting local manager')
       @local_manager.async.start
       signal(:started)
     end
 
     def handle_sidekiq_services
+      logger.debug('subscribing to sidekiq services')
       SidekiqRunner.receives("#{Donaghy.root_event_path}/#{Service::SIDEKIQ_EVENT_PREFIX}**/*", :handle_perform)
       SidekiqRunner.subscribe_to_global_events
     end
 
     def load_classes_and_subscribe_to_events
       handle_sidekiq_services
+      logger.debug("subscribing to donaghy services and configured services: #{(donaghy_services + configured_services).inspect}")
       (donaghy_services + configured_services).each do |klass|
         klass.subscribe_to_global_events
       end
@@ -61,6 +66,7 @@ module Donaghy
     end
 
     def stop(seconds = 0)
+      logger.info('stopping cluster node')
       futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
         manager.future.stop(seconds)
       end
@@ -69,9 +75,11 @@ module Donaghy
         klass.unsubscribe_host_pings
       end
 
+      logger.info('waiting for managers to stop')
       futures.each do |future|
         future.value
       end
+      logger.debug('completely stopping cluster node with terminate')
       terminate
       true
     end

@@ -12,6 +12,7 @@ module Donaghy
     end
 
     def fetch
+      logger.debug("fetch on #{queue.name}")
       evt = queue.receive
       if evt
         evt.received_on = queue
@@ -22,7 +23,7 @@ module Donaghy
           manager.async.handle_event(evt)
         end
       else
-        after(0) { fetch if current_actor.alive? } unless stopped?
+        after(0.5) { fetch if current_actor.alive? } unless stopped?
       end
     end
 

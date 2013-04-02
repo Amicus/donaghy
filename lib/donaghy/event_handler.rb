@@ -29,6 +29,7 @@ module Donaghy
     end
 
     def handle(event)
+      logger.debug("#{uid} handling: #{event.to_hash.inspect}")
       self.beater = HeartBeater.new_link(event, beat_timeout)
       beater.async.beat
       Donaghy.middleware.execute(current_actor, event) do
@@ -39,8 +40,10 @@ module Donaghy
             class_name.constantize.new.distribute_event(event)
           end
         else
+          logger.debug("#{uid} could not find local class to handle this event so remote distributing")
           RemoteDistributor.new.handle_distribution(event)
         end
+        logger.debug("#{uid} complete, acknowledging event")
         event.acknowledge
       end
       manager.async.event_handler_finished(current_actor)
