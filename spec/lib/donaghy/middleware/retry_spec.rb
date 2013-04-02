@@ -34,8 +34,6 @@ module Donaghy
         event.retry_count.should == 1
       end
 
-
-
     end
 
   end

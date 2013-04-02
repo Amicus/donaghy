@@ -29,9 +29,10 @@ module Donaghy
     end
 
     def handle(event)
-      logger.debug("#{uid} handling: #{event.to_hash.inspect}")
       self.beater = HeartBeater.new_link(event, beat_timeout)
       beater.async.beat
+      logger.debug("#{uid} is handling event")
+
       Donaghy.middleware.execute(current_actor, event) do
         local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
         if local_queues.length > 0

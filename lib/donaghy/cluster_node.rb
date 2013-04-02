@@ -47,7 +47,7 @@ module Donaghy
     end
 
     def configured_services
-      @services ||= configuration[:services].map do |service_name|
+      @services ||= Array(configuration[:services]).map do |service_name|
         const_name = service_name.camelize
 
         if Object.const_defined?(const_name)
@@ -79,6 +79,7 @@ module Donaghy
       futures.each do |future|
         future.value
       end
+
       logger.debug('completely stopping cluster node with terminate')
       terminate
       true
