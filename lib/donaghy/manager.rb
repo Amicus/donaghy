@@ -35,13 +35,15 @@ module Donaghy
       @stopped = true
       async.internal_stop(seconds)
       if current_actor.alive?
-        Timeout.timeout(seconds+1) do
+        Timeout.timeout(seconds+10) do
           wait(:actually_stopped)
         end
       end
       logger.info("manager received actually stopped so we are terminating")
       terminate
       true
+    rescue Timeout::Error
+      terminate if alive?
     end
 
     def internal_stop(seconds=0)

@@ -76,7 +76,7 @@ module Donaghy
         klass.unsubscribe_host_pings
       end
 
-      Timeout.timeout(seconds + 1) do
+      Timeout.timeout(seconds + 10) do
         logger.info('waiting for managers to stop')
         futures.each do |future|
           future.value
@@ -86,6 +86,8 @@ module Donaghy
       logger.debug('completely stopping cluster node with terminate')
       terminate
       true
+    rescue Timeout::Error
+      terminate if alive?
     end
 
   end
