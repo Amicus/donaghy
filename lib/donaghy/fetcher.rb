@@ -23,7 +23,7 @@ module Donaghy
           manager.async.handle_event(evt)
         end
       else
-        after(0.5) { fetch if current_actor.alive? } unless stopped?
+        after(0.5) { fetch if current_actor.alive? and !stopped? } unless stopped?
       end
     end
 

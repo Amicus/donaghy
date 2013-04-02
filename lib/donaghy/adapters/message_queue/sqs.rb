@@ -31,7 +31,7 @@ module Donaghy
           @opts = opts
           @sqs = opts[:sqs]
           @queue_name = queue_name
-          @queue = sqs.queues.create(queue_name)
+          @queue = sqs.queues.create(queue_name, {wait_time_seconds: 45})
         end
 
         def name
@@ -44,7 +44,7 @@ module Donaghy
         end
 
         def receive
-          message = queue.receive_message
+          message = queue.receive_message(wait_time_seconds: 30)
           return SQSEvent.from_sqs(message) if message
         end
 
