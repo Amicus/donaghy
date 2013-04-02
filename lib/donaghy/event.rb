@@ -60,6 +60,9 @@ module Donaghy
 
     def to_json(options = {})
       JSON.dump(to_hash(options))
+    rescue StandardError => e
+      logger.error("could not to json: #{event.to_hash.inspect}, had error: #{e.inspect} with backtrace: #{e.backtrace.join("\n")}")
+      raise e
     end
 
     def ==(other)
