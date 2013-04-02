@@ -29,7 +29,7 @@ module Donaghy
     end
 
     def handle(event)
-      self.beater = HeartBeater.new_link(event, beat_timeout)
+      self.beater = HeartBeater.new_link(event, current_actor, beat_timeout)
       beater.async.beat
       logger.debug("#{uid} is handling event")
 

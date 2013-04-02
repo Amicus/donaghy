@@ -9,8 +9,10 @@ module Donaghy
       })
     end
 
+    let(:handler) { mock(:event_handler, alive?: true)}
+
     let(:timeout) { 1 }
-    let(:beater) { HeartBeater.new(event, timeout) }
+    let(:beater) { HeartBeater.new(event, handler, timeout) }
 
     after do
       beater.terminate if beater.alive?

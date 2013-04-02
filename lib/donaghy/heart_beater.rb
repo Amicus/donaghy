@@ -3,7 +3,7 @@ module Donaghy
     include Celluloid
 
     attr_reader :event, :timeout, :timer
-    def initialize(event, timeout=5)
+    def initialize(event, handler, timeout=5)
       @event = event
       @timeout = timeout
       @timer = nil
@@ -22,7 +22,13 @@ module Donaghy
 
     def beat
       event.heartbeat(timeout*3) #we multiply by 3 to account for errors
-      @timer = after(timeout) { beat if current_actor.alive? }
+      @timer = after(timeout) do
+        if current_actor.alive? and handler.alive?
+          beat
+        elsif !handler.alive?
+          terminate
+        end
+      end
       true
     end
   end
