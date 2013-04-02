@@ -17,7 +17,7 @@ module Donaghy
         Donaghy.storage.inc('failed', 1)
         Donaghy.storage.add_to_set('failures', event.id)
         Donaghy.storage.put("failure:#{event.id}", JSON.dump({
-            event: event.to_hash,
+            event: event,
             exception: e.class.to_s,
             exception_inspect: e.inspect,
             backtrace: e.backtrace,
