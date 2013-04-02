@@ -1,6 +1,7 @@
 concurrency: 10
 #message_queue: :redis_queue
 #storage: :redis_storage
+storage: :in_memory
 message_queue:
   - :sqs
   - access_key_id: nada

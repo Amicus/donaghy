@@ -72,9 +72,11 @@ module Donaghy
       return @message_queue if @message_queue
       case configuration[:message_queue]
       when String, Symbol
-        if configuration[:message_queue].to_sym == :sqs
-          require 'donaghy/adapters/message_queue/sqs'
+        #TODO: requiring these things this way is kinda ugly
+        if [:redis_queue, :sqs].include?(configuration[:message_queue].to_sym)
+          require "donaghy/adapters/message_queue/#{configuration[:message_queue]}"
         end
+
         @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].to_s.camelize}".constantize.new
       when Array
         if configuration[:message_queue].first.to_sym == :sqs
