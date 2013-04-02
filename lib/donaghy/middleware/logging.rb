@@ -9,9 +9,9 @@ module Donaghy
         yield
         end_time = Time.now
         logger.info("handler #{handler.uid} finished work on #{event.id} for path #{event.path}, took: #{length_of_time(begin_time, end_time)}")
-      rescue Exception
-        logger.error("handler #{handler.uid} FAILED working on #{event.id} for path #{event.path} at: #{length_of_time(begin_time, Time.now)}")
-        raise
+      rescue Exception => e
+        logger.error("handler #{handler.uid} FAILED working on #{event.id} for path #{event.path} with #{e.class}")
+        raise e
       end
 
       def length_of_time(start_time, end_time)
