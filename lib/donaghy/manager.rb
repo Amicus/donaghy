@@ -43,7 +43,7 @@ module Donaghy
       terminate
       true
     rescue Timeout::Error
-      terminate if alive?
+      terminate
     end
 
     def internal_stop(seconds=0)
