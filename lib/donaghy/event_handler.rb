@@ -45,6 +45,7 @@ module Donaghy
           RemoteDistributor.new.handle_distribution(event)
         end
         logger.debug("#{uid} complete, acknowledging event")
+        beater.terminate if beater.alive?
         event.acknowledge
       end
       manager.async.event_handler_finished(current_actor)
