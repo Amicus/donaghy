@@ -53,21 +53,21 @@ module Donaghy
     # target isn't serializable - so we don't put it in here,
     # but it can be useful internally
     def to_hash(options = {})
-      ATTRIBUTE_METHODS.inject({}) do |hsh, meth|
+      (ATTRIBUTE_METHODS - Array(options[:without])).inject({}) do |hsh, meth|
         hsh[meth] = send(meth)
         hsh
       end
     end
 
     def to_json(options = {})
-      JSON.dump(to_hash(options))
+      JSON.dump(to_hash(options.merge(without: [:received_on])))
     rescue StandardError => e
       logger.error("could not to json: #{self.inspect}, had error: #{e.inspect} with backtrace: #{e.backtrace.join("\n")}")
       raise e
     end
 
     def ==(other)
-      (ATTRIBUTE_METHODS - [:id, :generated_at, :retry_count, :received_on, :timer, :value]).inject(true) {|accum, method| accum && self.send(method) == other.send(method) }
+      !((ATTRIBUTE_METHODS - [:id, :generated_at, :retry_count, :received_on, :timer, :value]).detect {|method| self.send(method) != other.send(method) })
     end
 
     def acknowledge
