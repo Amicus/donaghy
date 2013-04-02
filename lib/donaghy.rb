@@ -7,6 +7,10 @@ module Donaghy
 
   class MissingConfigurationFile < StandardError; end
 
+  def self.donaghy_env
+    ENV['DONAGHY_ENV'] || (defined?(ClusterFsk) && ClusterFsk.env) || ENV['AMICUS_ENV'] || 'development'
+  end
+
   def self.configuration
     return @configuration if @configuration
     @configuration = Configuration.new
@@ -86,12 +90,12 @@ module Donaghy
   end
 
   def self.default_queue_name
-    configuration[:queue_name] || configuration[:name] || "donaghy#{rand(5000)}"
+    "#{donaghy_env}_#{(configuration[:queue_name] || configuration[:name] || "donaghy#{rand(5000)}")}"
   end
 
 
   def self.root_queue
-    queue_for(Donaghy::ROOT_QUEUE)
+    queue_for("#{donaghy_env}_#{Donaghy::ROOT_QUEUE}")
   end
 
   def self.configuration=(opts)
@@ -116,12 +120,12 @@ module Donaghy
   end
 
   def self.local_service_host_queue
-    "donaghy_#{configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}"
+    "#{donaghy_env}_donaghy_#{configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}"
   end
 
   def self.default_config
     {
-        name: "donaghy_root",
+        name: "#{donaghy_env}_donaghy_root",
         concurrency: Celluloid.cores,
         cluster_concurrency: Celluloid.cores,
         storage: default_storage,
