@@ -13,6 +13,11 @@ command :run do |c|
   c.action do |args, options|
     require 'donaghy/cluster_node'
 
+    if File.exist?("config/boot.rb") and File.exist?("config/environment.rb")
+      require "config/boot"
+      require "config/environment"
+    end
+
     raise "no config file" unless File.exists?("config/donaghy.yml")
     say "running donaghy with config file #{File.expand_path("config/donaghy.yml")}"
     Donaghy.configuration = {config_file: File.expand_path("config/donaghy.yml")}
