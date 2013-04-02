@@ -2,8 +2,9 @@ module Donaghy
   class HeartBeater
     include Celluloid
 
-    attr_reader :event, :timeout, :timer
+    attr_reader :event, :timeout, :timer, :handler
     def initialize(event, handler, timeout=5)
+      @handler = handler
       @event = event
       @timeout = timeout
       @timer = nil
