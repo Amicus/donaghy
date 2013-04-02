@@ -72,8 +72,14 @@ module Donaghy
       return @message_queue if @message_queue
       case configuration[:message_queue]
       when String, Symbol
+        if configuration[:message_queue].to_sym == :sqs
+          require 'donaghy/adapters/message_queue/sqs'
+        end
         @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].to_s.camelize}".constantize.new
       when Array
+        if configuration[:message_queue].first.to_sym == :sqs
+          require 'donaghy/adapters/message_queue/sqs'
+        end
         @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].first.to_s.camelize}".constantize.new(*configuration[:message_queue][1..-1])
       else
         @message_queue = configuration[:message_queue]
