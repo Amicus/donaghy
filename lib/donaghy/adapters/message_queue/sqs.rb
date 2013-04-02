@@ -31,7 +31,7 @@ module Donaghy
           @opts = opts
           @sqs = opts[:sqs]
           @queue_name = queue_name
-          @queue = sqs.queues.create(queue_name, {wait_time_seconds: 45})
+          @queue = sqs.queues.create(queue_name)
         end
 
         def name
