@@ -78,7 +78,7 @@ module Donaghy
   # private to the developer, but not to handlers, etc so can't use private here
 
     def event_handler_died(event_handler, reason)
-      logger.warn("Event handler died due to #{reason.inspect}")
+      logger.warn("Event handler died due to #{reason.inspect}") if reason
       remove_in_progress(event_handler)
       @busy.delete(event_handler)
       unless stopped?

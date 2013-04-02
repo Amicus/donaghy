@@ -17,7 +17,16 @@ command :run do |c|
     say "running donaghy with config file #{File.expand_path("config/donaghy.yml")}"
     Donaghy.configuration = {config_file: File.expand_path("config/donaghy.yml")}
     $cluster_node = Donaghy::ClusterNode.new
-    $cluster_node.start
+    t = Thread.new do
+      $cluster_node.blocking_start
+    end
+    t.join
+  end
+end
+
+%w(INT TERM USR1 USR2 TTIN).each do |sig|
+  trap sig do
+    $cluster_node.stop if $cluster_node
   end
 end
 

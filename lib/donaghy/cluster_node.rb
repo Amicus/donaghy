@@ -26,6 +26,11 @@ module Donaghy
       signal(:started)
     end
 
+    def blocking_start
+      start
+      wait(:stopped)
+    end
+
     def handle_sidekiq_services
       logger.debug('subscribing to sidekiq services')
       SidekiqRunner.receives("#{Donaghy.root_event_path}/#{Service::SIDEKIQ_EVENT_PREFIX}*", :handle_perform)
@@ -68,6 +73,7 @@ module Donaghy
 
     def stop(seconds = 0)
       logger.info('stopping cluster node')
+      signal(:stop_requested)
       futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
         manager.future.stop(seconds)
       end
@@ -84,6 +90,7 @@ module Donaghy
       end
 
       logger.debug('completely stopping cluster node with terminate')
+      signal(:stopped)
       terminate
       true
     rescue Timeout::Error
