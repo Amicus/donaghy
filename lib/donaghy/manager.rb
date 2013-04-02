@@ -78,6 +78,7 @@ module Donaghy
   # private to the developer, but not to handlers, etc so can't use private here
 
     def event_handler_died(event_handler, reason)
+      logger.warn("Event handler died due to #{reason.inspect}")
       remove_in_progress(event_handler)
       @busy.delete(event_handler)
       unless stopped?
@@ -118,7 +119,8 @@ module Donaghy
       if fetcher.alive?
         fetcher.async.fetch
       else
-        @fetcher = Fetcher.new(current_actor, @queue).async.fetch
+        @fetcher = Fetcher.new(current_actor, @queue)
+        @fetcher.async.fetch
       end
     end
 
