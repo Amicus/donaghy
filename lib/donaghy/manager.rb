@@ -33,6 +33,7 @@ module Donaghy
 
     def stop(seconds = 0)
       @stopped = true
+      fetcher.stop_fetching if fetcher.alive?
       async.internal_stop(seconds)
       if current_actor.alive?
         Timeout.timeout(seconds+10) do
@@ -48,7 +49,6 @@ module Donaghy
 
     def internal_stop(seconds=0)
       logger.info("stopping the fetcher")
-      fetcher.stop_fetching if fetcher.alive?
       logger.info("terminating #{available.count} handlers")
       available.each do |handler|
         handler.terminate if handler.alive?

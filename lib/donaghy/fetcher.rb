@@ -33,7 +33,7 @@ module Donaghy
     end
 
     def stopped?
-      @stopped
+      @stopped || !manager.alive?
     end
 
   end
