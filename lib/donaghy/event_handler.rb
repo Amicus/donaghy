@@ -55,6 +55,7 @@ module Donaghy
 
     def terminate
       beater.terminate if beater and beater.alive?
+      super
     end
 
   end
