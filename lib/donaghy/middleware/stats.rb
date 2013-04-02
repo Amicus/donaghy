@@ -5,7 +5,7 @@ module Donaghy
       def call(handler, event)
         Donaghy.storage.inc('inprogress_count')
         Donaghy.storage.add_to_set('inprogress', event.id)
-        Donaghy.storage.put("inprogerss:#{event.id}", event.to_json)
+        Donaghy.storage.put("inprogress:#{event.id}", event.to_json)
 
         yield
 

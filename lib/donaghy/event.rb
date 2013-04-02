@@ -79,7 +79,7 @@ module Donaghy
     end
 
     def requeue(opts={})
-      (received_on || Donaghy.root_queue).publish(self, opts)
+      (self.received_on || Donaghy.root_queue).publish(self, opts)
       acknowledge
     end
 
