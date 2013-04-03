@@ -12,13 +12,14 @@ module Donaghy
 
     trap_exit :event_handler_died
 
-    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name
+    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name, :only_distribute
     def initialize(opts = {})
       @name = opts[:name] || Celluloid::UUID.generate
+      @only_distribute = opts[:only_distribute] || false
       @busy = []
       @events_in_progress = {}
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
-        EventHandler.new_link(current_actor)
+        new_event_handler
       end
       @queue = opts[:queue]
       @fetcher = Fetcher.new(current_actor, @queue)
@@ -30,6 +31,10 @@ module Donaghy
       @available.length.times do
         assign_work
       end
+    end
+
+    def new_event_handler
+      EventHandler.new_link(current_actor, only_distribute: only_distribute)
     end
 
     def stop(seconds = 0)
@@ -82,7 +87,7 @@ module Donaghy
       remove_in_progress(event_handler)
       @busy.delete(event_handler)
       unless stopped?
-        @available << EventHandler.new_link(current_actor)
+        @available << new_event_handler
         assign_work
       end
     end
@@ -95,7 +100,7 @@ module Donaghy
       elsif event_handler.alive?
         @available << event_handler
       else
-        @available << EventHandler.new_link(current_actor)
+        @available << new_event_handler
       end
       assign_work unless stopped?
     end

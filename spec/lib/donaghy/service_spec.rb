@@ -61,14 +61,14 @@ module Donaghy
     end
 
     it "should BaseService.subscribe_to_global_events" do
-      EventSubscriber.any_instance.should_receive(:subscribe).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
+      EventSubscriber.any_instance.should_receive(:subscribe).with(subscribed_event_path, Donaghy.default_queue_name, BaseService.name).once.and_return(true)
       BaseService.subscribe_to_global_events
     end
 
     it "should BaseService.unsubscribe_all_instances" do
       pending "appears to be an rspec problem"
-      EventUnsubscriber.any_instance.should_receive(:unsubscribe).with(subscribed_event_path, root_path, BaseService.name).once.and_return(true)
-      [Donaghy.local_service_host_queue, root_path].each do |ping_queue|
+      EventUnsubscriber.any_instance.should_receive(:unsubscribe).with(subscribed_event_path, Donaghy.default_queue_name, BaseService.name).once.and_return(true)
+      [Donaghy.local_service_host_queue, Donaghy.default_queue_name].each do |ping_queue|
         EventUnsubscriber.any_instance.should_receive(:unsubscribe).with(BaseService.ping_pattern, ping_queue, BaseService.name).once.and_return(true)
       end
       BaseService.unsubscribe_all_instances

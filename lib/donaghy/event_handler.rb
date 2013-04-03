@@ -20,30 +20,31 @@ module Donaghy
 
     BEAT_TIMEOUT = 5
 
-    attr_reader :manager, :uid, :beat_timeout
+    attr_reader :manager, :uid, :beat_timeout, :only_distribute
     attr_accessor :beater
     def initialize(manager, opts = {})
       @manager = manager
-      @uid = Celluloid::UUID.generate
+      @uid = "#{manager.name}_#{Celluloid::UUID.generate}"
       @beat_timeout = (opts[:heart_beat_timeout] || BEAT_TIMEOUT)
+      @only_distribute = opts[:only_distribute]
     end
 
     def handle(event)
       self.beater = HeartBeater.new_link(event, current_actor, beat_timeout)
       beater.async.beat
-      logger.debug("#{uid} is handling event")
 
       Donaghy.middleware.execute(current_actor, event) do
-        local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
-        if local_queues.length > 0
-          local_queues.each do |queue_and_class_name|
-            class_name = queue_and_class_name[:class_name]
-            class_name.constantize.new.distribute_event(event)
+        if only_distribute
+          if event.path.start_with?('donaghy/')
+            handle_locally(event)
+          else
+            logger.debug("#{uid} is remote distributing event")
+            RemoteDistributor.new.handle_distribution(event)
           end
         else
-          logger.debug("#{uid} could not find local class to handle this event so remote distributing")
-          RemoteDistributor.new.handle_distribution(event)
+          handle_locally(event)
         end
+
         logger.debug("#{uid} complete, acknowledging event")
         beater.terminate if beater.alive?
         event.acknowledge
@@ -52,6 +53,18 @@ module Donaghy
     ensure
       beater.terminate if beater.alive?
       self.beater = nil
+    end
+
+    def handle_locally(event)
+      local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
+      if local_queues.empty?
+        logger.warn("#{uid} received: #{event.path} but there are no local handlers")
+      else
+        local_queues.each do |queue_and_class_name|
+          class_name = queue_and_class_name[:class_name]
+          class_name.constantize.new.distribute_event(event)
+        end
+      end
     end
 
     def terminate

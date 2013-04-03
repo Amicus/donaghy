@@ -22,7 +22,6 @@ module Donaghy
 
   module MessageQueue
     class Sqs
-      include Logging
 
       class SqsQueue
 

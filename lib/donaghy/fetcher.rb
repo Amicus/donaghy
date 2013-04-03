@@ -12,7 +12,6 @@ module Donaghy
     end
 
     def fetch
-      logger.debug("fetch on #{queue.name}")
       evt = queue.receive
       if evt and !stopped?
         evt.received_on = queue

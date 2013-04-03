@@ -12,7 +12,7 @@ module Donaghy
     attr_reader :configuration, :cluster_manager, :local_manager
     def initialize(config = nil)
       @configuration = (config || Donaghy.configuration)
-      @cluster_manager = Manager.new(name: "donaghy_cluster", queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
+      @cluster_manager = Manager.new(name: "donaghy_cluster", only_distribute: true, queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
       @local_manager = Manager.new(name: "#{configuration[:name]}", queue: Donaghy.default_queue, concurrency: configuration[:cluster_concurrency])
     end
 
@@ -21,7 +21,7 @@ module Donaghy
       load_classes_and_subscribe_to_events
       logger.debug('starting cluster manager')
       @cluster_manager.async.start
-      logger.debug('starting local manager')
+      logger.debug("starting local manager listening on #{Donaghy.default_queue.name}")
       @local_manager.async.start
       signal(:started)
     end

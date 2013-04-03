@@ -13,7 +13,7 @@ module Donaghy
       klass.class_attribute :donaghy_options
       klass.class_attribute :internal_root_path
       klass.extend(ClassMethods)
-      klass.donaghy_options = {queue: Donaghy.root_event_path}
+      klass.donaghy_options = {queue: Donaghy.default_queue_name}
     end
 
     module ClassMethods
@@ -32,13 +32,13 @@ module Donaghy
 
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
-          Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.root_event_path, self.name]}"
-          EventSubscriber.new.subscribe(pattern, Donaghy.root_event_path, self.name)
+          Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.default_queue_name, self.name]}"
+          EventSubscriber.new.subscribe(pattern, Donaghy.default_queue_name, self.name)
         end
       end
 
       def subscribe_to_pings
-        EventSubscriber.new.subscribe(ping_pattern, Donaghy.root_event_path, self.name)
+        EventSubscriber.new.subscribe(ping_pattern, Donaghy.default_queue_name, self.name)
         EventSubscriber.new.subscribe(ping_pattern, Donaghy.local_service_host_queue, self.name)
       end
 
@@ -49,9 +49,9 @@ module Donaghy
       #this is for shutting down a service for good
       def unsubscribe_all_instances
         receives_hash.each_pair do |pattern, meth_and_options|
-          Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.root_event_path, self.name]}"
-          EventUnsubscriber.new.unsubscribe(pattern, Donaghy.root_event_path, self.name)
-          [Donaghy.root_event_path, Donaghy.local_service_host_queue].each do |queue|
+          Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.default_queue_name, self.name]}"
+          EventUnsubscriber.new.unsubscribe(pattern, Donaghy.default_queue_name, self.name)
+          [Donaghy.default_queue_name, Donaghy.local_service_host_queue].each do |queue|
             EventUnsubscriber.new.unsubscribe(ping_pattern, queue, self.name)
           end
         end

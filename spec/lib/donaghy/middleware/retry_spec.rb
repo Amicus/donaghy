@@ -4,7 +4,7 @@ module Donaghy
   module Middleware
 
     describe Retry do
-      let(:manager) { man = mock(:manager); man.stub_chain(:async, :event_handler_finished).and_return(true); man }
+      let(:manager) { man = mock(:manager, name: "test_mock_manager"); man.stub_chain(:async, :event_handler_finished).and_return(true); man }
       let(:event_handler) { EventHandler.new(manager) }
 
       let(:event) do
