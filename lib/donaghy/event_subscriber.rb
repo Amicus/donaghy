@@ -1,7 +1,6 @@
 module Donaghy
   class EventSubscriber
     include Donaghy::Service
-    donaghy_options  = {:queue => ROOT_QUEUE}
 
     EVENT_PATH = "donaghy/subscribe_to_path"
 

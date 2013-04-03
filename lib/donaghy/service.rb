@@ -13,7 +13,6 @@ module Donaghy
       klass.class_attribute :donaghy_options
       klass.class_attribute :internal_root_path
       klass.extend(ClassMethods)
-      klass.donaghy_options = {queue: Donaghy.default_queue_name}
     end
 
     module ClassMethods

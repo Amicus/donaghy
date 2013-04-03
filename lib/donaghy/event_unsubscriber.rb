@@ -1,7 +1,6 @@
 module Donaghy
   class EventUnsubscriber
     include Donaghy::Service
-    donaghy_options = {:queue => ROOT_QUEUE}
 
     EVENT_PATH = "donaghy/unsubscribe_from_path"
     receives EVENT_PATH, :handle_unsubscribe
