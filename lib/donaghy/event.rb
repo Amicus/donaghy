@@ -51,6 +51,14 @@ module Donaghy
                  end
     end
 
+    def generated_at
+      if @generated_at.is_a?(String)
+        @generated_at = Time.parse(@generated_at)
+      else
+        @generated_at
+      end
+    end
+
     # target isn't serializable - so we don't put it in here,
     # but it can be useful internally
     def to_hash(options = {})

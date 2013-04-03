@@ -56,6 +56,14 @@ module Donaghy
           queue.exists?
         end
 
+        def length
+          queue.approximate_number_of_messages
+        end
+
+        def length_of_delayed
+          queue.approximate_number_of_messages_delayed
+        end
+
       end
 
       attr_reader :opts

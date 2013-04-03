@@ -4,15 +4,16 @@ require 'redis'
 # and doesn't handle retries correctly
 module Donaghy
   module MessageQueue
-    class RedisQueue
+    class InMemoryQueue
       include Logging
 
-      class RedisListQueue
+      class ArrayQueue
 
-        attr_reader :queue, :queue_name, :opts, :redis
+        attr_reader :queue, :queue_name, :opts
         def initialize(queue_name, opts = {})
           @opts = opts
-          @redis = Redis.new(opts[:redis_opts])
+          @queue = []
+          @guard = Mutex.new
           @queue_name = queue_name
         end
 
@@ -21,25 +22,29 @@ module Donaghy
         end
 
         def publish(evt, opts={})
-          redis.rpush(queue_name, evt.to_json)
+          @guard.synchronize do
+            queue << evt
+          end
         end
 
         def receive
-          #do a new redis here as blpop blocks all other connections
-          message = Redis.new(opts[:redis_opts]).blpop(queue_name, timeout: (opts[:wait_time_seconds] || 10))
-          Event.from_json(message[1]) if message and !message.empty?
+          @guard.synchronize do
+            queue.shift
+          end
         end
 
         def destroy
-          redis.del(queue_name)
+          @guard.synchronize do
+            @queue = []
+          end
         end
 
         def exists?
-          redis.exists(queue_name)
+          true
         end
 
         def length
-          redis.llen(queue_name)
+          queue.length
         end
 
         def length_of_delayed
@@ -54,7 +59,7 @@ module Donaghy
       end
 
       def find_by_name(queue_name)
-        RedisListQueue.new(queue_name, redis_opts: opts)
+        ArrayQueue.new(queue_name, redis_opts: opts)
       end
 
     end
