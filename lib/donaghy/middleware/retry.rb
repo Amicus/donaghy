@@ -1,6 +1,7 @@
 module Donaghy
   module Middleware
     class Retry
+      include Logging
 
       MAX_RETRY_ATTEMPTS = 25
 
