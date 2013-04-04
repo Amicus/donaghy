@@ -10,8 +10,6 @@ module Donaghy
     include Celluloid
     include Logging
 
-    task_class TaskThread
-
     def self.default_middleware
       Middleware::Chain.new do |c|
         c.add Middleware::Retry
