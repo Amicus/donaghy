@@ -54,7 +54,7 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
-      logger.info("manager #{name} async stopping the fetcher")
+      logger.info("manager #{name} stopping the fetcher")
       fetcher.terminate if fetcher.alive?
       logger.info("manager #{name} terminating #{available.count} handlers")
       available.each do |handler|
