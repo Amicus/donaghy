@@ -1,5 +1,3 @@
-require 'redis'
-
 # Redis is intended for local development only at this point as it can lose messages
 # and doesn't handle retries correctly
 module Donaghy
