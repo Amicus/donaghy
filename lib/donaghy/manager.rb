@@ -40,8 +40,6 @@ module Donaghy
     def stop(seconds = 0)
       logger.info("manager #{name} is being asked to stop in #{seconds} seconds")
       @stopped = true
-      logger.info("manager #{name} async stopping the fetcher")
-      fetcher.async.stop_fetching if fetcher.alive?
       async.internal_stop(seconds)
       if current_actor.alive?
         Timeout.timeout(seconds+10) do
@@ -56,6 +54,8 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
+      logger.info("manager #{name} async stopping the fetcher")
+      fetcher.terminate if fetcher.alive?
       logger.info("manager #{name} terminating #{available.count} handlers")
       available.each do |handler|
         handler.terminate if handler.alive?

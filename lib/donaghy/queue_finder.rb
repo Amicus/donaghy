@@ -1,3 +1,5 @@
+require 'benchmark'
+
 module Donaghy
   class QueueFinder
     include Logging
@@ -10,7 +12,7 @@ module Donaghy
 
     def find
       results = nil
-      time = Benchmarkk.realtime do
+      time = Benchmark.realtime do
         results = matching_paths.map do |path|
           listeners_for(path)
         end.flatten

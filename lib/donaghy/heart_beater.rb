@@ -11,18 +11,12 @@ module Donaghy
     end
 
     def terminate
-      stop_beating
+      timer.cancel unless timer.nil?
       super
     end
 
-    def stop_beating
-      unless timer.nil?
-        timer.cancel
-      end
-    end
-
     def beat
-      event.heartbeat(timeout*3) #we multiply by 3 to account for errors
+      defer { event.heartbeat(timeout*3) } #we multiply by 3 to account for errors
       @timer = after(timeout) do
         if current_actor.alive? and handler.alive?
           beat

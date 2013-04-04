@@ -10,7 +10,7 @@ module Donaghy
     subject { Fetcher.new(fake_manager, queue) }
 
     after do
-      subject.stop_fetching if subject.alive?
+      subject.terminate if subject.alive?
     end
 
     it "should distribute an event to the manager and add the received_on" do

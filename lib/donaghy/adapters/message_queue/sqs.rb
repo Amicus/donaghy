@@ -2,11 +2,15 @@ require 'aws-sdk'
 
 module Donaghy
   class SQSEvent < Event
+    include Logging
+
+    class EventRequeuedButTryingToHeartbeat < StandardError; end
 
     attr_accessor :sqs_message
     def self.from_sqs(sqs_message)
       evt = from_json(sqs_message.body)
       evt.sqs_message = sqs_message
+      @requeued = false
       return evt
     end
 
@@ -15,7 +19,18 @@ module Donaghy
     end
 
     def heartbeat(timeout=15)
+      raise EventRequeuedButTryingToHeartbeat if @requeued
       sqs_message.visibility_timeout = timeout
+    rescue AWS::SQS::Errors::InvalidParameterValue => e
+      logger.warn("could not heartbeat #{id} #{path} due to #{e.inspect}")
+    end
+
+    def requeue(opts = {})
+      @requeued = true
+      logger.info("resetting visibility timeout to #{opts[:delay] || 1} for #{path}")
+      sqs_message.visibility_timeout = (opts[:delay] || 1).to_i
+    rescue AWS::SQS::Errors::InvalidParameterValue => e
+      logger.warn("could not requeue #{id} #{path} due to #{e.inspect}")
     end
 
   end
