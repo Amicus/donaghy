@@ -1,5 +1,3 @@
-require 'benchmark'
-
 module Donaghy
   class QueueFinder
     include Logging
