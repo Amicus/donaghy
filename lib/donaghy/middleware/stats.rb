@@ -10,8 +10,8 @@ module Donaghy
         yield
 
         Donaghy.storage.inc('complete', 1)
-        Donaghy.storage.unset("failure:#{event.id}")
         Donaghy.storage.remove_from_set('failures', event.id)
+        Donaghy.storage.unset("failure:#{event.id}")
 
       rescue Exception => e
         Donaghy.storage.inc('failed', 1)
