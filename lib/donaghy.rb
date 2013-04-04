@@ -137,8 +137,17 @@ module Donaghy
         concurrency: Celluloid.cores,
         cluster_concurrency: Celluloid.cores,
         storage: default_storage,
-        message_queue: :redis_queue
+        message_queue: default_message_queue
     }
+  end
+
+  def self.default_message_queue
+    require 'donaghy/adapters/message_queue/redis_queue'
+    :redis_queue
+  rescue LoadError
+    logger.warn("could not require redis, defaulting to in memory message queue")
+    require 'donaghy/adapters/message_queue/in_memory_queue'
+    :in_memory_queue
   end
 
   def self.default_storage
@@ -146,8 +155,14 @@ module Donaghy
       require 'donaghy/adapters/storage/torquebox_storage'
       :torquebox_storage
     else
-      require 'donaghy/adapters/storage/redis_storage'
-      :redis_storage
+      begin
+        require 'donaghy/adapters/storage/redis_storage'
+        :redis_storage
+      rescue LoadError
+        logger.warn("could not require redis, defaulting to in memory storage")
+        require 'donaghy/adapters/storage/in_memory'
+        :in_memory
+      end
     end
   end
 
