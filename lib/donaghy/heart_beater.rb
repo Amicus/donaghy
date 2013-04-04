@@ -2,8 +2,6 @@ module Donaghy
   class HeartBeater
     include Celluloid
 
-    task_class TaskThread
-
     attr_reader :event, :timeout, :timer, :handler
     def initialize(event, handler, timeout=5)
       @handler = handler

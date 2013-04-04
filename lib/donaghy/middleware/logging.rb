@@ -3,14 +3,14 @@ module Donaghy
     class Logging
       include Donaghy::Logging
 
-      def call(handler, event)
-        logger.info("handler #{handler.uid} beginning to work on #{event.id} for path #{event.path}")
+      def call(event, handler_info)
+        logger.info("handler #{handler_info[:uid]} beginning to work on #{event.id} for path #{event.path}")
         begin_time = Time.now
         yield
         end_time = Time.now
-        logger.info("handler #{handler.uid} finished work on #{event.id} for path #{event.path}, took: #{length_of_time(begin_time, end_time)}")
+        logger.info("handler #{handler_info[:uid]} finished work on #{event.id} for path #{event.path}, took: #{length_of_time(begin_time, end_time)}")
       rescue Exception => e
-        logger.error("handler #{handler.uid} FAILED working on #{event.id} for path #{event.path} with #{e.class}")
+        logger.error("handler #{handler_info[:uid]} FAILED working on #{event.id} for path #{event.path} with #{e.class}")
         raise e
       end
 

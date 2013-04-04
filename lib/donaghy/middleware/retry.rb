@@ -5,7 +5,7 @@ module Donaghy
 
       MAX_RETRY_ATTEMPTS = 25
 
-      def call(handler, event)
+      def call(event, _)
         yield
       rescue Exception => e
         event.retry_count += 1

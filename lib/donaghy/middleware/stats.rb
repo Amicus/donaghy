@@ -2,7 +2,7 @@ module Donaghy
   module Middleware
     class Stats
 
-      def call(handler, event)
+      def call(event, _)
         Donaghy.storage.inc('inprogress_count')
         Donaghy.storage.add_to_set('inprogress', event.id)
         Donaghy.storage.put("inprogress:#{event.id}", event.to_json)

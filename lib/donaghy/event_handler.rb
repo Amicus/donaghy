@@ -32,22 +32,23 @@ module Donaghy
     def handle(event)
       self.beater = HeartBeater.new_link(event, current_actor, beat_timeout)
       beater.async.beat
-
-      Donaghy.middleware.execute(current_actor, event) do
-        if only_distribute
-          if event.path.start_with?('donaghy/')
-            handle_locally(event)
+      defer do
+        Donaghy.middleware.execute(event, uid: uid, only_distribute: only_distribute, manager_name: manager.name) do
+          if only_distribute
+            if event.path.start_with?('donaghy/')
+              handle_locally(event)
+            else
+              logger.info("#{uid} is remote distributing event")
+              RemoteDistributor.new.handle_distribution(event)
+            end
           else
-            logger.info("#{uid} is remote distributing event")
-            RemoteDistributor.new.handle_distribution(event)
+            handle_locally(event)
           end
-        else
-          handle_locally(event)
-        end
 
-        logger.info("#{uid} complete, acknowledging event")
-        beater.terminate if beater.alive?
-        event.acknowledge
+          logger.info("#{uid} complete, acknowledging event")
+          beater.terminate if beater.alive?
+          event.acknowledge
+        end
       end
       manager.async.event_handler_finished(current_actor)
     ensure
