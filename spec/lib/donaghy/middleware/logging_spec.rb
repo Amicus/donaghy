@@ -26,7 +26,7 @@ module Donaghy
       end
 
       it "should log twice" do
-        event_handler.logger.should_receive(:info).exactly(4).times
+        event_handler.logger.should_receive(:info).exactly(3).times
         event_handler.handle(event)
       end
 

@@ -11,14 +11,9 @@ module Donaghy
     end
 
     def find
-      results = nil
-      time = Benchmark.realtime do
-        results = matching_paths.map do |path|
-          listeners_for(path)
-        end.flatten
-      end
-      logger.info("queue finder retrieved results for #{path} in #{time}")
-      results
+      matching_paths.map do |path|
+        listeners_for(path)
+      end.flatten
     end
 
     def listeners_for(matched_path)
