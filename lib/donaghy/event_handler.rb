@@ -10,6 +10,8 @@ module Donaghy
     include Celluloid
     include Logging
 
+    task_class TaskThread
+
     def self.default_middleware
       Middleware::Chain.new do |c|
         c.add Middleware::Retry
@@ -38,14 +40,14 @@ module Donaghy
           if event.path.start_with?('donaghy/')
             handle_locally(event)
           else
-            logger.debug("#{uid} is remote distributing event")
+            logger.info("#{uid} is remote distributing event")
             RemoteDistributor.new.handle_distribution(event)
           end
         else
           handle_locally(event)
         end
 
-        logger.debug("#{uid} complete, acknowledging event")
+        logger.info("#{uid} complete, acknowledging event")
         beater.terminate if beater.alive?
         event.acknowledge
       end

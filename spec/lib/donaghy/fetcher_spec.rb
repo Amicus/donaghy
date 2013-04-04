@@ -3,7 +3,7 @@ require 'spec_helper'
 module Donaghy
   describe Fetcher do
     let(:fake_async) { mock(:fake_async, handle_event: true) }
-    let(:fake_manager) { mock(:manager, async: fake_async, alive?: true) }
+    let(:fake_manager) { mock(:manager, name: 'test_mocked_manager', async: fake_async, alive?: true) }
     let(:queue) { Donaghy.root_queue }
     let(:event) { Event.from_hash(payload: { cool: true })}
 

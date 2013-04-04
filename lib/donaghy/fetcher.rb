@@ -15,11 +15,11 @@ module Donaghy
       evt = queue.receive
       if evt and !stopped?
         evt.received_on = queue
-        logger.info("received evt #{evt.to_hash.inspect}")
+        logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}")
         manager.async.handle_event(evt)
       elsif evt and stopped?
         evt.received_on = queue
-        logger.info("received evt #{evt.to_hash.inspect}, requeing because stopped")
+        logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}, requeing because stopped")
         evt.requeue
       else
         after(0) { fetch if current_actor.alive? and !stopped? } unless stopped?
@@ -29,6 +29,10 @@ module Donaghy
     def stop_fetching
       @stopped = true
       terminate
+    end
+
+    def manager_name
+      @manager_name ||= manager.name
     end
 
     def stopped?
