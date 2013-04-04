@@ -44,12 +44,11 @@ module Donaghy
           else
             handle_locally(event)
           end
-
-          logger.info("#{uid} complete, acknowledging event")
-          beater.terminate if beater.alive?
-          event.acknowledge
         end
       end
+      logger.info("#{uid} complete, acknowledging event")
+      beater.terminate if beater.alive?
+      event.acknowledge
       manager.async.event_handler_finished(current_actor)
     ensure
       beater.terminate if beater.alive?

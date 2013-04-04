@@ -1,5 +1,6 @@
 module Donaghy
   class QueueFinder
+    include Logging
 
     attr_reader :path, :storage
     def initialize(path, storage)
@@ -8,9 +9,14 @@ module Donaghy
     end
 
     def find
-      matching_paths.map do |path|
-        listeners_for(path)
-      end.flatten
+      results = nil
+      time = Benchmarkk.realtime do
+        results = matching_paths.map do |path|
+          listeners_for(path)
+        end.flatten
+      end
+      logger.info("queue finder retrieved results for #{path} in #{time}")
+      results
     end
 
     def listeners_for(matched_path)
