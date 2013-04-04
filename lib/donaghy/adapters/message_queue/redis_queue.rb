@@ -25,9 +25,12 @@ module Donaghy
         end
 
         def receive
+          redis = Redis.new(opts[:redis_opts])
           #do a new redis here as blpop blocks all other connections
-          message = Redis.new(opts[:redis_opts]).blpop(queue_name, timeout: (opts[:wait_time_seconds] || 10))
+          message = redis.blpop(queue_name, timeout: (opts[:wait_time_seconds] || 10))
           Event.from_json(message[1]) if message and !message.empty?
+        ensure
+          redis.disconnect if redis
         end
 
         def destroy
