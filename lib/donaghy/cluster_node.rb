@@ -59,7 +59,7 @@ module Donaghy
         if Object.const_defined?(const_name)
           const_name.constantize
         else
-          logger.warn("DEPRECATION WARNING: we no longer support auto loading of services... please require your classes first")
+          logger.warn("DEPRECATION WARNING: we no longer support auto loading of services... please require your classes first. For now, requiring #{service_name}")
           require "#{Dir.pwd}/lib/#{service_name}"
           const_name.constantize
         end
