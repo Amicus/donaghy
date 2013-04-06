@@ -26,7 +26,12 @@ module Donaghy
       end
 
       def get(key)
-        Marshal.load(storage.get(key))
+        val = storage.get(key)
+        if val
+          Marshal.load(val)
+        end
+      rescue ArgumentError, TypeError
+        val
       end
 
       def unset(key)
