@@ -22,11 +22,11 @@ module Donaghy
       end
 
       def put(key, val)
-        storage.put(key, val)
+        storage.put(key, Marshal.dump(val))
       end
 
       def get(key)
-        storage.get(key)
+        Marshal.load(storage.get(key))
       end
 
       def unset(key)
