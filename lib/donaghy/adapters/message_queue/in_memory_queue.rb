@@ -25,7 +25,6 @@ module Donaghy
         def receive
           Timeout.timeout(5) do
             msg = queue.pop
-            logger.info("msg received on #{name}") if msg
             Event.from_json(msg) if msg
           end
         rescue Timeout::Error
