@@ -1,4 +1,41 @@
 #!/usr/bin/env ruby
-require 'donaghy/cli'
+require 'donaghy'
+require 'commander/import'
 
-Donaghy::CLI.new(ARGV.dup).parse
+# :name is optional, otherwise uses the basename of this executable
+program :name, 'Donagy CLI'
+program :version, Donaghy::VERSION
+program :description, "run donaghy from the command line"
+
+command :run do |c|
+  c.syntax = 'donaghy run'
+  c.description = 'runs donaghy in the current directory'
+  c.action do |args, options|
+    require 'donaghy/cluster_node'
+
+    if File.exist?("config/boot.rb") and File.exist?("config/environment.rb")
+      require "config/boot"
+      require "config/environment"
+      ::Rails.application.eager_load!
+    end
+
+    raise "no config file" unless File.exists?("config/donaghy.yml")
+    say "running donaghy with config file #{File.expand_path("config/donaghy.yml")}"
+    Donaghy.configuration = {config_file: File.expand_path("config/donaghy.yml")}
+    $cluster_node = Donaghy::ClusterNode.new
+    t = Thread.new do
+      $cluster_node.blocking_start
+    end
+    t.join
+  end
+end
+
+%w(INT TERM USR1 USR2 TTIN).each do |sig|
+  trap sig do
+    $cluster_node.stop if $cluster_node
+  end
+end
+
+at_exit do
+  $cluster_node.stop if $cluster_node
+end

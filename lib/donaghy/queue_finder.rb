@@ -1,18 +1,11 @@
 module Donaghy
   class QueueFinder
+    include Logging
 
-    def self.all_listeners
-      Donaghy.redis.with do |conn|
-        all_paths = conn.zrange("donaghy_event_paths", 0, -1)
-        listeners_array = all_paths.map do |path|
-          conn.smembers("donaghy_#{path}").map {|serialized_listener| ListenerSerializer.load(serialized_listener)}
-        end
-        Hash[all_paths.zip(listeners_array)]
-      end
-    end
-
-    def initialize(path)
+    attr_reader :path, :storage
+    def initialize(path, storage)
       @path = path
+      @storage = storage
     end
 
     def find
@@ -22,24 +15,21 @@ module Donaghy
     end
 
     def listeners_for(matched_path)
-      redis.with do |conn|
-        conn.smembers("donaghy_#{matched_path}").map do |serialized_listener|
-          ListenerSerializer.load(serialized_listener)
-        end
+      storage.get("donaghy_#{matched_path}").map do |serialized_listener|
+        ListenerSerializer.load(serialized_listener)
       end
     end
 
     # we need to optimize this - but there ain't no event paths right now
     def matching_paths
-      redis.with do |conn|
-        conn.zrange("donaghy_event_paths", 0, -1).select do |registered_path|
-          File.fnmatch(registered_path, @path)
+      event_paths = storage.get("donaghy_event_paths")
+      if event_paths and event_paths.respond_to?(:select)
+        event_paths.select do |registered_path|
+          File.fnmatch(registered_path, path)
         end
+      else
+        []
       end
-    end
-
-    def redis
-      Donaghy.redis
     end
 
   end

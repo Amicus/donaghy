@@ -12,20 +12,22 @@ if defined?(Bundler)
   # Bundler.require(:default, :assets, Rails.env)
 end
 
+require 'donaghy/cluster_node'
+
 class Boiler
 
   attr_reader :server
   def initialize(opts={})
     Donaghy.configuration = opts
-    @server = Donaghy.server
+    @cluster_node = Donaghy.cluster_node
   end
 
   def start
-    server.start
+    cluster_node.start
   end
 
   def stop
-    server.stop
+    cluster_node.stop
   end
 
 

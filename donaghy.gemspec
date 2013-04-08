@@ -8,16 +8,15 @@ Gem::Specification.new do |gem|
   gem.version       = Donaghy::VERSION
   gem.authors       = ["Topper Bowers"]
   gem.email         = ["topper@amicushq.com.com"]
-  gem.description   = %q{gem to run services in torquebox using sidekiq and a custom layer}
-  gem.summary       = %q{gem to run services in torquebox using sidekiq and a custom layer}
+  gem.description   = %q{gem to run services on aws}
+  gem.summary       = %q{gem to run services on aws}
   gem.homepage      = "https://github.com/Amicus/donaghy"
 
-  gem.add_dependency "sidekiq", "~> 2.7.0"
-  gem.add_dependency "connection_pool"
+  gem.add_dependency "celluloid", "~>0.13.0"
+  gem.add_dependency "hashie"
   gem.add_dependency "configliere"
   gem.add_dependency "activesupport", ">= 3.0.0"
-  gem.add_dependency "zk", "~> 1.7.4"
-  gem.add_dependency "redis_failover", "~> 1.0.1"
+  gem.add_dependency "commander", "~> 4.1.0"
 
   gem.add_development_dependency "rspec"
   gem.add_development_dependency "pry"

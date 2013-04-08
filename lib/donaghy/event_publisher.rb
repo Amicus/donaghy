@@ -35,7 +35,7 @@ module Donaghy
     end
 
     # create a random key that will expire if not returned
-    # then use the redis ping and block on popping off the queue
+    # then use the redis ping and block on popping off the message_queue
     def blocking_ping(root, service, opts = {})
       random_queue = "#{root}_#{service.underscore}_#{SecureRandom.base64(16)}"
       timeout_in = opts[:timeout] || 5
