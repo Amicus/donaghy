@@ -6,17 +6,11 @@ module Donaghy
     let(:event_path) { "blah/cool" }
     let(:queue) { "testQueue" }
     let(:class_name) { "KlassHandler" }
-    let(:queue_finder) { QueueFinder.new(event_path)}
+    let(:queue_finder) { QueueFinder.new(event_path, Donaghy.local_storage)}
 
     before do
       #setup the listener
-      SubscribeToEventWorker.new.perform(event_path, queue, class_name)
-    end
-
-    it "should QueueFinder.all_listeners" do
-      QueueFinder.all_listeners.should == {
-          event_path => [{queue: queue, class_name: class_name}]
-      }
+      EventSubscriber.new.subscribe(event_path, queue, class_name)
     end
 
     describe "#find" do
@@ -33,17 +27,17 @@ module Donaghy
 
       describe "with a wildcard" do
         let(:results) { queue_finder.find }
+        let(:wildcard_path) { "bla*/c*" }
 
         before do
-          #subscribe to a wildcard
-          SubscribeToEventWorker.new.perform("bla*/c*", queue, class_name)
+          EventSubscriber.new.subscribe(wildcard_path, queue, class_name)
         end
 
         it "should find two" do
           results.length.should == 2
         end
 
-        it "should be a hash of queue, class" do
+        it "should be a hash of message_queue, class" do
           results.last[:queue].should == queue
           results.last[:class_name].should == "KlassHandler"
         end
