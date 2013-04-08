@@ -30,7 +30,7 @@ module Donaghy
           message = redis.blpop(queue_name, timeout: (opts[:wait_time_seconds] || 10))
           Event.from_json(message[1]) if message and !message.empty?
         ensure
-          redis.disconnect if redis
+          redis.quit if redis
         end
 
         def destroy

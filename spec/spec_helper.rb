@@ -5,6 +5,8 @@ require 'donaghy'
 require 'donaghy/adapters/storage/in_memory'
 require 'donaghy/adapters/message_queue/sqs'
 
+require 'donaghy/adapters/message_queue/in_memory_queue'
+
 #require 'redis'
 #require 'donaghy/adapters/storage/redis_storage'
 #require 'donaghy/adapters/message_queue/redis_queue'

@@ -45,8 +45,13 @@ module Donaghy
       end
 
       it "should receive them even if not subscribed" do
+        Timeout.timeout(5) do
+          until Donaghy.storage.member_of?('donaghy_event_paths', 'donaghy_test/donaghy/sidekiq_emulator/*')
+            sleep 0.1
+          end
+        end
         SomeGuy.perform_async(1,2,3)
-        Timeout.timeout(10) do
+        Timeout.timeout(5) do
           SomeGuy.holder.pop.should == [1,2,3]
         end
       end

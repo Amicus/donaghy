@@ -10,8 +10,7 @@ module Donaghy
         attr_reader :queue, :queue_name, :opts
         def initialize(queue_name, opts = {})
           @opts = opts
-          @queue = []
-          @guard = Mutex.new
+          @queue = ::Queue.new
           @queue_name = queue_name
         end
 
@@ -20,21 +19,21 @@ module Donaghy
         end
 
         def publish(evt, opts={})
-          @guard.synchronize do
-            queue << evt
-          end
+          queue.push(evt.to_json)
         end
 
         def receive
-          @guard.synchronize do
-            queue.shift
+          Timeout.timeout(5) do
+            msg = queue.pop
+            logger.info("msg received on #{name}") if msg
+            Event.from_json(msg) if msg
           end
+        rescue Timeout::Error
+          nil
         end
 
         def destroy
-          @guard.synchronize do
-            @queue = []
-          end
+          queue.clear
         end
 
         def exists?
@@ -51,13 +50,17 @@ module Donaghy
 
       end
 
-      attr_reader :opts
+      attr_reader :opts, :queue_hash, :guard
       def initialize(opts = {})
+        @guard = Mutex.new
+        @queue_hash = {}
         @opts = opts
       end
 
       def find_by_name(queue_name)
-        ArrayQueue.new(queue_name, redis_opts: opts)
+        guard.synchronize do
+          queue_hash[queue_name] ||= ArrayQueue.new(queue_name, redis_opts: opts)
+        end
       end
 
     end
