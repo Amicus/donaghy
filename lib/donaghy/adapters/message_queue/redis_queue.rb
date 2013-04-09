@@ -1,5 +1,4 @@
 require 'redis'
-require 'connection_pool'
 
 # Redis is intended for local development only at this point as it can lose messages
 # and doesn't handle retries correctly
@@ -10,13 +9,10 @@ module Donaghy
 
       class RedisListQueue
 
-        attr_reader :queue, :queue_name, :opts, :redis, :pool
+        attr_reader :queue, :queue_name, :opts, :redis
         def initialize(queue_name, opts = {})
           @opts = opts
-          @pool = ConnectionPool.new(:size => 10, :timeout => 5) do
-            Redis.new(opts[:redis_opts])
-          end
-          #@redis = Redis.new(opts[:redis_opts])
+          @redis = Redis.new(opts[:redis_opts])
           @queue_name = queue_name
         end
 
@@ -25,7 +21,7 @@ module Donaghy
         end
 
         def publish(evt, opts={})
-          pool.with {|redis| redis.rpush(queue_name, evt.to_json) }
+          redis.rpush(queue_name, evt.to_json)
         end
 
         def receive
@@ -38,15 +34,16 @@ module Donaghy
         end
 
         def destroy
-          pool.with {|redis| redis.del(queue_name) }
+          redis.del(queue_name)
+          redis.quit
         end
 
         def exists?
-          pool.with {|redis| redis.exists(queue_name) }
+          redis.exists(queue_name)
         end
 
         def length
-          pool.with {|redis| redis.llen(queue_name) }
+          redis.llen(queue_name)
         end
 
         def length_of_delayed
