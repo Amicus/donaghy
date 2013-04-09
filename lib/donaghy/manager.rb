@@ -22,7 +22,7 @@ module Donaghy
         new_event_handler
       end
       @queue = opts[:queue]
-      @fetcher = Fetcher.new(current_actor, @queue)
+      @fetcher = new_fetcher
       @stopped = true
     end
 
@@ -31,6 +31,11 @@ module Donaghy
       @available.length.times do
         assign_work
       end
+      true
+    end
+
+    def new_fetcher
+      Fetcher.new(current_actor, queue, manager_name: name)
     end
 
     def new_event_handler
@@ -124,7 +129,7 @@ module Donaghy
       if fetcher.alive?
         fetcher.async.fetch
       else
-        @fetcher = Fetcher.new(current_actor, @queue)
+        @fetcher = new_fetcher
         @fetcher.async.fetch
       end
     end

@@ -1,5 +1,6 @@
 require 'monitor'
 require 'celluloid'
+require 'socket'
 
 module Donaghy
   ROOT_QUEUE = "global_event"
@@ -127,8 +128,8 @@ module Donaghy
     end
   end
 
-  def self.local_service_host_queue
-    "#{donaghy_env}_donaghy_#{configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}"
+  def self.hostname
+    @hostname ||= Socket.gethostname
   end
 
   def self.default_config

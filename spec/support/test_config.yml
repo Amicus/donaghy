@@ -1,9 +1,20 @@
 concurrency: 10
-#message_queue: :redis_queue
-#storage: :redis_storage
+#message_queue:
+#  - :sqs
+#  - access_key_id: nada
+#    secret_access_key: nada
+#    sqs_endpoint: localhost
+#    sqs_port: 9324
+#    use_ssl: false
+message_queue:
+  - :redis_queue
+  - wait_time_seconds: 1
+storage: :redis_storage
 storage: :in_memory
-message_queue: :in_memory_queue
+#message_queue: :in_memory_queue
 name: "donaghy_test"
 queue_name: "donaghy_test"
+concurrency: 2
+cluster_concurrency: 2
 services:
   - test_loaded_service

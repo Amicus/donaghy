@@ -92,6 +92,10 @@ module Donaghy
       acknowledge
     end
 
+    def inspect
+      to_hash.inspect
+    end
+
   end
 
 end

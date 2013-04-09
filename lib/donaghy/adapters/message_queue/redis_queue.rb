@@ -1,4 +1,5 @@
 require 'redis'
+require 'connection_pool'
 
 # Redis is intended for local development only at this point as it can lose messages
 # and doesn't handle retries correctly
@@ -9,10 +10,13 @@ module Donaghy
 
       class RedisListQueue
 
-        attr_reader :queue, :queue_name, :opts, :redis
+        attr_reader :queue, :queue_name, :opts, :redis, :pool
         def initialize(queue_name, opts = {})
           @opts = opts
-          @redis = Redis.new(opts[:redis_opts])
+          @pool = ConnectionPool.new(:size => 10, :timeout => 5) do
+            Redis.new(opts[:redis_opts])
+          end
+          #@redis = Redis.new(opts[:redis_opts])
           @queue_name = queue_name
         end
 
@@ -21,28 +25,28 @@ module Donaghy
         end
 
         def publish(evt, opts={})
-          redis.rpush(queue_name, evt.to_json)
+          pool.with {|redis| redis.rpush(queue_name, evt.to_json) }
         end
 
         def receive
-          redis = Redis.new(opts[:redis_opts])
           #do a new redis here as blpop blocks all other connections
-          message = redis.blpop(queue_name, timeout: (opts[:wait_time_seconds] || 10))
-          Event.from_json(message[1]) if message and !message.empty?
+          redis = Redis.new(opts[:redis_opts])
+          message = redis.blpop(queue_name, timeout: (opts[:wait_time_seconds] || 5))
+          return Event.from_json(message[1]) if message and !message.empty?
         ensure
           redis.quit if redis
         end
 
         def destroy
-          redis.del(queue_name)
+          pool.with {|redis| redis.del(queue_name) }
         end
 
         def exists?
-          redis.exists(queue_name)
+          pool.with {|redis| redis.exists(queue_name) }
         end
 
         def length
-          redis.llen(queue_name)
+          pool.with {|redis| redis.llen(queue_name) }
         end
 
         def length_of_delayed

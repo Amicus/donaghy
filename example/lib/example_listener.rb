@@ -17,9 +17,6 @@ class ExampleListener
 
     # do work
 
-    #oh no
-    raise_system_error("OH NO", evt) #triggers a big ol' alert to us
-
     # raise "unexpected" # will retry the event processing
   end
 

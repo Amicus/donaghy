@@ -21,8 +21,8 @@ module Donaghy
         storage.clear
       end
 
-      def put(key, val)
-        storage.put(key, Marshal.dump(val))
+      def put(key, val, expires=0)
+        storage.put(key, Marshal.dump(val), expires)
       end
 
       def get(key)
