@@ -29,8 +29,8 @@ module Donaghy
     end
 
     def start
-      @beater.beat
       @stopped = false
+      @beater.start_beating
       @available.length.times do
         assign_work
       end

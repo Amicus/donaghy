@@ -54,7 +54,7 @@ module Donaghy
 
     it "should beat the configuration" do
       #happens through the ManagerBeater spun up at manager start
-      Donaghy.storage.get("#{Donaghy.hostname}_#{manager.name}").should == Donaghy.configuration.to_hash
+      Donaghy.storage.get(manager.beater.path_to_beat).should == Donaghy.configuration.to_hash
     end
 
     it "should publish the message" do

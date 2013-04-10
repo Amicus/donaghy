@@ -135,6 +135,7 @@ module Donaghy
   def self.default_config
     {
         name: "#{donaghy_env}_donaghy_root",
+        pwd: Dir.pwd,
         concurrency: Celluloid.cores,
         cluster_concurrency: Celluloid.cores,
         storage: default_storage,
