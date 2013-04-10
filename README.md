@@ -1,8 +1,8 @@
 # Donaghy
 
-Donaghy is basically a pub-sub system that can also handle doing background jobs in a sidekiq-like manner. It supports adapters for storage and message queue with a generic interface it comes with production-ready adapters for torquebox infinispan cache (for storage) and sqs (for the queues). It also has in-memory stores and queues for testing and a redis-based store and queue for development (not recommended for production).
+Donaghy is basically a pub-sub system that can also handle doing background jobs in a sidekiq-like manner. It supports adapters for storage and message queue with a generic interface. It comes with production-ready adapters for torquebox infinispan cache (for storage) and sqs (for the queues). It also has in-memory stores and queues for testing and a redis-based store and queue for development (not recommended for production).
 
-It's multi-threaded (heads up) and will make sure a message gets run *at least once.* It relies on some sort of shared storage and a queueing implementation that supports FIFO.
+It's multi-threaded (heads up) and will make sure a message gets run *at least once.* It relies on shared storage and a queueing implementation that supports FIFO.
 
 ## Installation
 
