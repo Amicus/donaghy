@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'donaghy/fetcher'
 
 module Donaghy
   describe Fetcher do

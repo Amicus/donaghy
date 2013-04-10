@@ -25,16 +25,17 @@ module Donaghy
         end
 
         def receive
-          redis = Redis.new(opts[:redis_opts])
           #do a new redis here as blpop blocks all other connections
-          message = redis.blpop(queue_name, timeout: (opts[:wait_time_seconds] || 10))
-          Event.from_json(message[1]) if message and !message.empty?
+          redis = Redis.new(opts[:redis_opts])
+          message = redis.blpop(queue_name, timeout: (opts[:wait_time_seconds] || 5))
+          return Event.from_json(message[1]) if message and !message.empty?
         ensure
           redis.quit if redis
         end
 
         def destroy
           redis.del(queue_name)
+          redis.quit
         end
 
         def exists?
