@@ -8,8 +8,8 @@ module Donaghy
       class NotAnEnumerableError < StandardError; end
 
       class ValueEntry
-        attr_accessor :value, :expires
 
+        attr_accessor :value, :expires
         def initialize(attrs={})
           @value = attrs[:value]
           @expires = attrs[:expires]

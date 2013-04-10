@@ -2,6 +2,7 @@ require 'celluloid/autostart'
 require 'donaghy/fetcher'
 require 'donaghy/event_handler'
 require 'donaghy/remote_distributor'
+require 'donaghy/manager_beater'
 
 module Donaghy
   class Manager
@@ -12,7 +13,7 @@ module Donaghy
 
     trap_exit :event_handler_died
 
-    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name, :only_distribute
+    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name, :only_distribute, :beater
     def initialize(opts = {})
       @name = opts[:name] || Celluloid::UUID.generate
       @only_distribute = opts[:only_distribute] || false
@@ -21,12 +22,14 @@ module Donaghy
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
         new_event_handler
       end
+      @beater = ManagerBeater.new(name)
       @queue = opts[:queue]
       @fetcher = new_fetcher
       @stopped = true
     end
 
     def start
+      @beater.beat
       @stopped = false
       @available.length.times do
         assign_work
@@ -59,6 +62,8 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
+      logger.info("manager #{name} stopping the beater")
+      beater.terminate if beater.alive?
       logger.info("manager #{name} stopping the fetcher")
       fetcher.terminate if fetcher.alive?
       logger.info("manager #{name} terminating #{available.count} handlers")
