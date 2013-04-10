@@ -5,7 +5,7 @@ module Donaghy
       "#{hsh[:queue]},#{hsh[:class_name]}"
     end
 
-    # queue, klass = ListenerSerializer.load("my_queue,MyClass")
+    # message_queue, klass = ListenerSerializer.load("my_queue,MyClass")
     def self.load(str)
       split = str.split(",")
       {queue: split[0], class_name: split[1]}

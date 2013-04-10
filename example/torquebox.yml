@@ -6,8 +6,8 @@ services:
 ruby:
   version: 1.9
 environment:
-  RAILS_ENV: staging
-  ENVIRONMENT_ENV: staging
+  RAILS_ENV: test
+  ENVIRONMENT_ENV: test
 pooling:
   web:
     lazy: true

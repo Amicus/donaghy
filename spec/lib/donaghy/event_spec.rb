@@ -39,6 +39,18 @@ module Donaghy
       event2 = Event.new(path: event_path)
       event2.should == event
     end
+
+    it "should have dates go back and forth through json" do
+      generated_at = event.generated_at
+      json = event.to_json
+      new_event = Event.from_json(json)
+      new_event.generated_at.to_i.should == generated_at.to_i
+    end
+
+    it "should inspect" do
+      event.inspect.should == event.to_hash.inspect
+    end
+
   end
 
 end

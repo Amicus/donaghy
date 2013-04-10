@@ -1,11 +1,16 @@
 require 'monitor'
+require 'celluloid'
+require 'socket'
 
 module Donaghy
   ROOT_QUEUE = "global_event"
-  REDIS_TIMEOUT = 5
   CONFIG_GUARD = Monitor.new
 
   class MissingConfigurationFile < StandardError; end
+
+  def self.donaghy_env
+    ENV['DONAGHY_ENV'] || (defined?(ClusterFsck) && ClusterFsck.env) || ENV['AMICUS_ENV'] || 'development'
+  end
 
   def self.configuration
     return @configuration if @configuration
@@ -28,26 +33,78 @@ module Donaghy
   def self.logger
     return @logger if @logger
     CONFIG_GUARD.synchronize do
-      @logger = Sidekiq.logger unless @logger
+      @logger = Celluloid.logger unless @logger
     end
+    @logger
   end
 
   def self.logger=(logger)
     CONFIG_GUARD.synchronize do
-      @logger = logger
+      @logger = Celluloid.logger = logger
     end
   end
 
-  def self.server
+  def self.storage
+    return @storage if @storage
     CONFIG_GUARD.synchronize do
-      @server ||= Server.new
+      return @storage if @storage #catches the 2nd one to get here
+      case configuration[:storage]
+      when String, Symbol
+        @storage = "Donaghy::Storage::#{configuration[:storage].to_s.camelize}".constantize.new
+      when Array
+        @storage = "Donaghy::Storage::#{configuration[:storage].first.to_s.camelize}".constantize.new(*configuration[:storage][1..-1])
+      else
+        @storage = configuration[:storage]
+      end
     end
   end
 
-  def self.actor_node_manager
+  def self.local_storage
+    return @local_storage if @local_storage
     CONFIG_GUARD.synchronize do
-      Celluloid::Actor[:actor_node_manager] ||= ActorNodeManager.new(configuration[:redis_failover].merge(zk: Donaghy.zk))
+      return @local_storage if @local_storage
+      @local_storage = Donaghy::Storage::InMemory.new
     end
+  end
+
+  def self.message_queue
+    return @message_queue if @message_queue
+    CONFIG_GUARD.synchronize do
+      return @message_queue if @message_queue
+      case configuration[:message_queue]
+      when String, Symbol
+        #TODO: requiring these things this way is kinda ugly
+        if [:redis_queue, :sqs].include?(configuration[:message_queue].to_sym)
+          require "donaghy/adapters/message_queue/#{configuration[:message_queue]}"
+        end
+
+        @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].to_s.camelize}".constantize.new
+      when Array
+        if configuration[:message_queue].first.to_sym == :sqs
+          require 'donaghy/adapters/message_queue/sqs'
+        end
+        @message_queue = "Donaghy::MessageQueue::#{configuration[:message_queue].first.to_s.camelize}".constantize.new(*configuration[:message_queue][1..-1])
+      else
+        @message_queue = configuration[:message_queue]
+      end
+    end
+  end
+
+  def self.queue_for(name)
+    message_queue.find_by_name(name)
+  end
+
+  def self.default_queue
+    queue_for(default_queue_name)
+  end
+
+  def self.default_queue_name
+    "#{donaghy_env}_#{(configuration[:queue_name] || configuration[:name] || "donaghy#{rand(5000)}")}"
+  end
+
+
+  def self.root_queue
+    queue_for("#{donaghy_env}_#{Donaghy::ROOT_QUEUE}")
   end
 
   def self.configuration=(opts)
@@ -66,126 +123,81 @@ module Donaghy
         configuration["#{configuration[:name]}_version"] = File.read(version_file_path)
       end
       configuration.resolve!
-      @using_failover = using_failover?
-      logger.error("NOT USING REDIS FAILOVER BECAUSE /redis_failover/nodes does not exist") unless using_failover?
       logger.info("Donaghy configuration is now: #{configuration.inspect}")
       configuration
     end
   end
 
-  def self.local_service_host_queue
-    "donaghy_#{configuration[:name]}_#{Socket.gethostname.gsub(/\./, '_')}"
+  def self.hostname
+    @hostname ||= Socket.gethostname
   end
 
   def self.default_config
     {
-        redis: {
-            hosts: [
-                {host: "localhost", port: 6379}
-            ]
-        },
-        zk: {
-            hosts: [
-                "localhost:2181"
-            ]
-        },
-        #redis_failover: {
-        #  max_failures: 2,
-        #  node_strategy: 'majority',
-        #  failover_strategy: 'latency',
-        #  required_node_managers: 1,
-        #  nodes: [
-        #      { host: "localhost", port: 6379 }
-        #  ]
-        #},
-        name: "donaghy_root",
-        concurrency: 25
+        name: "#{donaghy_env}_donaghy_root",
+        pwd: Dir.pwd,
+        concurrency: Celluloid.cores,
+        cluster_concurrency: Celluloid.cores,
+        storage: default_storage,
+        message_queue: default_message_queue
     }
   end
 
-  def self.shutdown_zk
-    CONFIG_GUARD.synchronize do
-      if zk and zk.connected?
-        zk.close!
-        @zk = nil
-      end
-    end
+  def self.default_message_queue
+    require 'donaghy/adapters/message_queue/redis_queue'
+    :redis_queue
+  rescue LoadError
+    logger.warn("could not require redis, defaulting to in memory message queue")
+    require 'donaghy/adapters/message_queue/in_memory_queue'
+    :in_memory_queue
   end
 
-  def self.zk
-    return @zk if @zk
-    logger.info "setting up zk with #{configuration['zk.hosts'].join(",")}"
-    CONFIG_GUARD.synchronize do
-      @zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5) unless @zk
-    end
-  end
-
-  # we're seeing weird hangs - so let's give redis failover its own zk and let it
-  # do its thiing
-  def self.failover_zk
-    return @failover_zk if @failover_zk
-    logger.info "setting up failover zk with #{configuration['zk.hosts'].join(",")}"
-    CONFIG_GUARD.synchronize do
-      @failover_zk = ZK.new(configuration['zk.hosts'].join(","), timeout: 5) unless @failover_zk
-    end
-  end
-
-  def self.new_redis_connection(config = nil)
-    if @using_failover
-      RedisFailover::Client.new(:zk => failover_zk)
+  def self.default_storage
+    if defined?(TorqueBox)
+      require 'donaghy/adapters/storage/torquebox_storage'
+      :torquebox_storage
     else
-      Redis.new(url: "redis://#{config[:host]}:#{config[:port]}")
-    end
-  end
-
-  def self.using_failover?
-    @using_failover ||= (configuration[:redis_failover] && does_failover_node_exist?)
-  end
-
-  def self.does_failover_node_exist?
-    logger.info("finding if node exists")
-    zk.exists?("/redis_failover/nodes")
-  end
-
-  def self.reset_redis
-    CONFIG_GUARD.synchronize do
-      @redis = nil
-    end
-  end
-
-  def self.redis
-    return @redis if @redis
-    CONFIG_GUARD.synchronize do
-      unless @redis
-        @redis = ConnectionPool.new(:size => configuration[:concurrency], :timeout => REDIS_TIMEOUT) { new_redis_connection(configuration['redis.hosts'].first) }
+      begin
+        require 'donaghy/adapters/storage/redis_storage'
+        :redis_storage
+      rescue LoadError
+        logger.warn("could not require redis, defaulting to in memory storage")
+        require 'donaghy/adapters/storage/in_memory'
+        :in_memory
       end
     end
   end
 
+  def self.middleware
+    @middleware ||= EventHandler.default_middleware
+    yield(@middleware) if block_given?
+    @middleware
+  end
+
+  #this is used mostly for testing
+  def self.reset
+    @configuration = @storage = @local_storage = @message_queue = @logger = @event_publisher = @middleware = nil
+  end
+
 end
 
-at_exit do
-  Donaghy.logger.info("shutting down zk in donaghy because of trapped at_exit")
-  Donaghy.shutdown_zk
-end
+$: << File.dirname(__FILE__)
 
 require 'active_support/core_ext/string/inflections'
-require 'zk'
-require 'redis_failover'
-require 'sidekiq/manager'
-require 'sidekiq/client'
 require 'configliere'
 
+require 'donaghy/configuration'
+#in memory storage is used internally
+require 'donaghy/adapters/storage/in_memory'
+require 'donaghy/logging'
+require 'donaghy/middleware/chain'
+require 'donaghy/service'
 require 'donaghy/event'
 require 'donaghy/queue_finder'
-require 'donaghy/event_distributer_worker'
-require 'donaghy/subscribe_to_event_worker'
-require 'donaghy/unsubscribe_from_event_worker'
+require 'donaghy/remote_distributor'
+require 'donaghy/event_subscriber'
+require 'donaghy/event_unsubscriber'
 require 'donaghy/listener_serializer'
-require 'donaghy/service'
-require 'donaghy/configuration'
-require 'donaghy/server'
 require 'donaghy/event_publisher'
-require 'donaghy/actor_node_manager'
 
-
+require 'donaghy/event_handler'
