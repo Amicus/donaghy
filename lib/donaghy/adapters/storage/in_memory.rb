@@ -7,6 +7,15 @@ module Donaghy
       class NotAnIntegerError < StandardError; end
       class NotAnEnumerableError < StandardError; end
 
+      class ValueEntry
+
+        attr_accessor :value, :expires
+        def initialize(attrs={})
+          @value = attrs[:value]
+          @expires = attrs[:expires]
+        end
+      end
+
       attr_reader :storage_hash, :lock
       def initialize
         @storage_hash = Hashie::Mash.new
@@ -17,12 +26,19 @@ module Donaghy
         @storage_hash = Hashie::Mash.new
       end
 
-      def put(key, val)
-        storage_hash[key] = val
+      def put(key, val, expires=nil)
+        if expires
+          expires = Time.now + expires
+        end
+        entry = ValueEntry.new(value: val, expires: expires)
+        storage_hash[key] = entry
       end
 
       def get(key)
-        storage_hash[key]
+        entry = storage_hash[key]
+        if entry and (!entry.expires || entry.expires > Time.now)
+          entry.value
+        end
       end
 
       def unset(key)

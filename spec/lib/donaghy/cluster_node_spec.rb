@@ -13,12 +13,15 @@ module Donaghy
     let(:test_loaded_service) { TestLoadedService }
 
     before do
+      Donaghy.logger.info("node start")
       node.start
     end
 
     after do
       if node.alive?
+        Donaghy.logger.info("node stop")
         (node.future.stop).value
+        Donaghy.logger.info("node stopped")
       end
     end
 
@@ -46,13 +49,19 @@ module Donaghy
 
       it "should receive them even if not subscribed" do
         Timeout.timeout(5) do
+          #binding.pry
           until Donaghy.storage.member_of?('donaghy_event_paths', 'donaghy_test/donaghy/sidekiq_emulator/*')
             sleep 0.1
           end
         end
         SomeGuy.perform_async(1,2,3)
-        Timeout.timeout(5) do
-          SomeGuy.holder.pop.should == [1,2,3]
+        Donaghy.logger.info("------------> starting 5 sec timeout for SomeGuy holder")
+        begin
+          Timeout.timeout(5) do
+            SomeGuy.holder.pop.should == [1,2,3]
+          end
+        #rescue Timeout::Error
+         # binding.pry
         end
       end
     end

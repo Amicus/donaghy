@@ -2,9 +2,9 @@ require 'spec_helper'
 require 'donaghy/manager'
 
 module Donaghy
-  #this is going to end up being more of an integration test along with the node_spec
+  #this is going to end up being more of an integration test along with the cluster_node_spec
   describe Manager do
-    let(:manager) { Manager.new(concurrency: 1, queue: Donaghy.default_queue) }
+    let(:manager) { Manager.new(name: 'bob', concurrency: 1, queue: Donaghy.default_queue) }
 
     let(:event_path) { "donaghy/test_worker" }
     let(:queue_name) { Donaghy.default_queue_name }
@@ -52,6 +52,10 @@ module Donaghy
       end
     end
 
+    it "should beat the configuration" do
+      #happens through the ManagerBeater spun up at manager start
+      Donaghy.storage.get(manager.beater.path_to_beat).should == Donaghy.configuration.to_hash
+    end
 
     it "should publish the message" do
       Donaghy.default_queue.publish(Event.from_hash(path: event_path, payload: {cool: true }))

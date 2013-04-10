@@ -2,6 +2,7 @@ require 'celluloid/autostart'
 require 'donaghy/fetcher'
 require 'donaghy/event_handler'
 require 'donaghy/remote_distributor'
+require 'donaghy/manager_beater'
 
 module Donaghy
   class Manager
@@ -12,7 +13,7 @@ module Donaghy
 
     trap_exit :event_handler_died
 
-    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name, :only_distribute
+    attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name, :only_distribute, :beater
     def initialize(opts = {})
       @name = opts[:name] || Celluloid::UUID.generate
       @only_distribute = opts[:only_distribute] || false
@@ -21,16 +22,23 @@ module Donaghy
       @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
         new_event_handler
       end
+      @beater = ManagerBeater.new(name)
       @queue = opts[:queue]
-      @fetcher = Fetcher.new(current_actor, @queue)
+      @fetcher = new_fetcher
       @stopped = true
     end
 
     def start
       @stopped = false
+      @beater.start_beating
       @available.length.times do
         assign_work
       end
+      true
+    end
+
+    def new_fetcher
+      Fetcher.new(current_actor, queue, manager_name: name)
     end
 
     def new_event_handler
@@ -54,6 +62,8 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
+      logger.info("manager #{name} stopping the beater")
+      beater.terminate if beater.alive?
       logger.info("manager #{name} stopping the fetcher")
       fetcher.terminate if fetcher.alive?
       logger.info("manager #{name} terminating #{available.count} handlers")
@@ -124,7 +134,7 @@ module Donaghy
       if fetcher.alive?
         fetcher.async.fetch
       else
-        @fetcher = Fetcher.new(current_actor, @queue)
+        @fetcher = new_fetcher
         @fetcher.async.fetch
       end
     end

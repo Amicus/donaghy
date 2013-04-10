@@ -24,6 +24,15 @@ module Donaghy
         subject.get(key).should be_nil
       end
 
+      it "should allow an expires" do
+        now = Time.now
+        subject.put(key, 'test', 10)
+        subject.get(key).should == 'test'
+        Timecop.freeze(now + 11) do
+          subject.get(key).should be_nil
+        end
+      end
+
       describe "adding and removing from set" do
         before do
           subject.add_to_set(key, :a)

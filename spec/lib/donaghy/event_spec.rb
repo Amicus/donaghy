@@ -47,6 +47,10 @@ module Donaghy
       new_event.generated_at.to_i.should == generated_at.to_i
     end
 
+    it "should inspect" do
+      event.inspect.should == event.to_hash.inspect
+    end
+
   end
 
 end

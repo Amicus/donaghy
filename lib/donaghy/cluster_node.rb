@@ -19,10 +19,13 @@ module Donaghy
     def start
       logger.debug('cluster node starting up')
       load_classes_and_subscribe_to_events
-      logger.debug('starting cluster manager')
-      @cluster_manager.async.start
-      logger.debug("starting local manager listening on #{Donaghy.default_queue.name}")
-      @local_manager.async.start
+      logger.debug("starting cluster manager and local manager on #{Donaghy.default_queue.name}")
+      futures = [
+          @cluster_manager.future.start,
+          @local_manager.future.start
+      ]
+      futures.each(&:value)
+      logger.debug("cluster node started both cluster and local managers")
       signal(:started)
     end
 
@@ -38,14 +41,11 @@ module Donaghy
     end
 
     def load_classes_and_subscribe_to_events
-      handle_sidekiq_services
       logger.debug("subscribing to donaghy services and configured services: #{(donaghy_services + configured_services).inspect}")
       (donaghy_services + configured_services).each do |klass|
         klass.subscribe_to_global_events
       end
-      configured_services.each do |klass|
-        klass.subscribe_to_pings
-      end
+      handle_sidekiq_services
     end
 
     def donaghy_services
@@ -76,10 +76,6 @@ module Donaghy
       signal(:stop_requested)
       futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
         manager.future.stop(seconds)
-      end
-
-      configured_services.each do |klass|
-        klass.unsubscribe_host_pings
       end
 
       Timeout.timeout(seconds + 10) do

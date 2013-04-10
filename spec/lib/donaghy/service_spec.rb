@@ -24,24 +24,6 @@ module Donaghy
     let(:event_path_with_root) { "#{root_path}/#{event_path}"}
     let(:base_service) { BaseService.new }
 
-    it "should have a BaseService.ping_pattern" do
-      # class name of BaseService is Donaghy::BaseService so klass.underscore is donaghy/base_service
-      BaseService.ping_pattern.should == "#{Donaghy.configuration[:name]}/donaghy/base_service/ping*"
-    end
-
-    it "should subscribe to pings" do
-      pending "this looks to be an rspec problem"
-      [Donaghy.root_event_path, Donaghy.local_service_host_queue].each do |queue|
-        EventSubscriber.any_instance.should_receive(:subscribe).with(BaseService.ping_pattern, queue, BaseService.name).once.and_return(true)
-      end
-      BaseService.subscribe_to_pings
-    end
-
-    it "should unsubscribe from the host-only pings" do
-      EventUnsubscriber.any_instance.should_receive(:unsubscribe).with(BaseService.ping_pattern, Donaghy.local_service_host_queue, BaseService.name).once.and_return(true)
-      BaseService.unsubscribe_host_pings
-    end
-
     it "should #root_trigger" do
       mock_queue = mock(:queue, publish: true)
       Donaghy.stub(:root_queue).and_return(mock_queue)
@@ -66,11 +48,7 @@ module Donaghy
     end
 
     it "should BaseService.unsubscribe_all_instances" do
-      pending "appears to be an rspec problem"
       EventUnsubscriber.any_instance.should_receive(:unsubscribe).with(subscribed_event_path, Donaghy.default_queue_name, BaseService.name).once.and_return(true)
-      [Donaghy.local_service_host_queue, Donaghy.default_queue_name].each do |ping_queue|
-        EventUnsubscriber.any_instance.should_receive(:unsubscribe).with(BaseService.ping_pattern, ping_queue, BaseService.name).once.and_return(true)
-      end
       BaseService.unsubscribe_all_instances
     end
 
@@ -79,9 +57,5 @@ module Donaghy
       BaseService.new.distribute_event(event)
       BaseService.handler.pop.last.should == event
     end
-
-
   end
-
-
 end

@@ -19,6 +19,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "commander", "~> 4.1.0"
 
   gem.add_development_dependency "rspec"
+  gem.add_development_dependency "timecop"
   gem.add_development_dependency "pry"
 
   gem.files         = `git ls-files`.split($/)

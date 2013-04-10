@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'socket'
 
 module Donaghy
 
@@ -17,6 +18,10 @@ module Donaghy
       Donaghy.reset
       Donaghy.configuration[:message_queue] = [:sqs, {cool: true}]
       Donaghy.message_queue.opts[:cool].should be_true
+    end
+
+    it "should have a hostname" do
+      Donaghy.hostname.should == Socket.gethostname
     end
 
 

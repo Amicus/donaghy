@@ -7,7 +7,7 @@ module Donaghy
       def flush
       end
 
-      def put(key, val)
+      def put(key, val, expires=nil)
       end
 
       def get(key)
