@@ -26,7 +26,7 @@ module Donaghy
       beat
     end
 
-  # below should be private but can't because of the way the actor model works
+  ### below should be private but can't because of the way the actor model works
 
     # store the configuration in the shared storage every so often, but let it expire, so when we stop beating
     # it will dissolve.

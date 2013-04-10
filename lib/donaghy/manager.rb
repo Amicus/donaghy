@@ -34,6 +34,7 @@ module Donaghy
       @available.length.times do
         assign_work
       end
+      #Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.started", payload: {name: name, fqdn: Donaghy.hostname})
       true
     end
 
@@ -81,6 +82,7 @@ module Donaghy
             remove_in_progress(busy_handler)
             busy_handler.terminate
           end
+          #Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.stopped", payload: {name: name, fqdn: Donaghy.hostname})
           signal(:actually_stopped)
         end
       end
