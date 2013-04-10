@@ -24,7 +24,6 @@ module Donaghy
         logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}, requeing because stopped")
         evt.requeue
       else
-        logger.info("redoing fetch of #{queue.name}")
         after(0) { fetch if !@stopped and manager.alive? } if !@stopped and manager.alive?
       end
     end
