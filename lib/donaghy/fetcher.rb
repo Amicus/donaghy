@@ -4,7 +4,6 @@ module Donaghy
   class Fetcher
     include Celluloid
     include Logging
-    task_class TaskThread
 
     attr_reader :manager, :queue, :manager_name
     def initialize(manager, queue, opts={})

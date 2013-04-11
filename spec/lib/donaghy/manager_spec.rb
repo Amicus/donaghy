@@ -4,7 +4,7 @@ require 'donaghy/manager'
 module Donaghy
   #this is going to end up being more of an integration test along with the cluster_node_spec
   describe Manager do
-    let(:manager) { Manager.new(name: 'bob', concurrency: 1, queue: Donaghy.default_queue) }
+    let(:manager) { Manager.new(name: 'bob', concurrency: 2, queue: Donaghy.default_queue) }
 
     let(:event_path) { "donaghy/test_worker" }
     let(:queue_name) { Donaghy.default_queue_name }

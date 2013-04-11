@@ -19,7 +19,8 @@ module Donaghy
       @only_distribute = opts[:only_distribute] || false
       @busy = []
       @events_in_progress = {}
-      @available = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores).times.map do
+      @concurrency = (opts[:concurrency] || opts['concurrency'] || Celluloid.cores)
+      @available = @concurrency.times.map do
         new_event_handler
       end
       @beater = ManagerBeater.new(name)
@@ -39,7 +40,7 @@ module Donaghy
     end
 
     def new_fetcher
-      Fetcher.new(current_actor, queue, manager_name: name)
+      Fetcher.new(current_actor, queue, {manager_name: name})
     end
 
     def new_event_handler
