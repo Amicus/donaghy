@@ -59,7 +59,7 @@ module Donaghy
 
     it "should publish the message" do
       Donaghy.default_queue.publish(Event.from_hash(path: event_path, payload: {cool: true }))
-      Timeout.timeout(2) do
+      Timeout.timeout(5) do
         TestWorker.finished.pop.payload.cool.should be_true
       end
     end

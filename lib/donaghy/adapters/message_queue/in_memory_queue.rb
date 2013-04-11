@@ -24,7 +24,6 @@ module Donaghy
 
         def receive
           Timeout.timeout(20) do
-            sleep 0.5
             msg = queue.pop
             Event.from_json(msg) if msg
           end

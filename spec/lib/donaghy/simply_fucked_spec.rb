@@ -1,30 +1,34 @@
 require 'spec_helper'
+require 'redis'
 
 describe "a fucked situation" do
 
 
   class SimpleQueue
 
+    QUEUE_NAME = 'simple_queue'
+
     def initialize
-      @queue = Queue.new
+      @queue = Redis.new
     end
 
     def publish(evt)
-      @queue.push(evt)
+      Donaghy.logger.info("publishing: #{evt}")
+      @queue.rpush(QUEUE_NAME, evt)
     end
 
     def receive
-      sleep 1
-      @queue.pop(true) #non block
-    rescue ThreadError
-      nil
+      receiver = Redis.new
+      res = receiver.blpop(QUEUE_NAME, timeout: 1)
+      Donaghy.logger.info("blpop got #{res}")
+      res[1] if res
+    ensure
+      receiver.quit if receiver
     end
 
   end
 
-
   SIMPLE_QUEUE = SimpleQueue.new
-
 
   class SimpleHandler
     include Celluloid
@@ -34,6 +38,7 @@ describe "a fucked situation" do
     end
 
     def handle_result(result)
+      Donaghy.logger.info("handling: #{result}")
       @manager.async.handler_done(current_actor, result)
     end
 
@@ -43,23 +48,18 @@ describe "a fucked situation" do
   class SimpleFetcher
     include Celluloid
 
-    def initialize(manager, queue, opts = {})
+    #task_class TaskThread
+
+    def initialize(manager, queue)
       @manager = manager
       @queue = queue
     end
 
     def fetch
+      Donaghy.logger.info("fetch started")
       res = @queue.receive
-      if res
-        @manager.async.handle_result(res)
-      else
-        after(0) { fetch if !@stopped and @manager.alive? } if !@stopped and @manager.alive?
-      end
-    end
-
-    def terminate
-      @stopped = true
-      super
+      Donaghy.logger.info("fetch received: #{res}")
+      res
     end
 
   end
@@ -72,8 +72,10 @@ describe "a fucked situation" do
     def initialize(queue, holder, opts={})
       @holder = holder
       @queue = queue
-      @fetcher = SimpleFetcher.new(current_actor, @queue)
       @concurrency = opts[:concurrency] || Celluloid.ncores
+
+      @fetcher = SimpleFetcher.pool(size: @concurrency, args: [current_actor, @queue])
+
       @available = @concurrency.times.map do
         SimpleHandler.new_link(current_actor)
       end
@@ -94,14 +96,17 @@ describe "a fucked situation" do
     end
 
     def assign_work
-      @fetcher.async.fetch unless @stopped
+      async.handle_result(@fetcher.fetch) unless @stopped
     end
 
     def handle_result(result)
       unless @stopped
-        handler = @available.shift
-        @busy << handler
-        handler.async.handle_result(result)
+        if result
+          handler = @available.shift
+          @busy << handler
+          handler.async.handle_result(result)
+        end
+        assign_work
       end
     end
 
@@ -110,6 +115,7 @@ describe "a fucked situation" do
       @busy.delete(handler)
       unless @stopped
         @available << SimpleHandler.new_link(current_actor)
+        assign_work
       end
     end
 
@@ -121,6 +127,7 @@ describe "a fucked situation" do
     end
 
     def stop
+      Donaghy.logger.info("stop received")
       terminate
     end
 
@@ -131,7 +138,10 @@ describe "a fucked situation" do
   let(:holder) { Queue.new }
   let(:manager) { SimpleManager.new(queue, holder, concurrency: 5) }
 
+  $redis = Redis.new
+
   before do
+    $redis.del(SimpleQueue::QUEUE_NAME)
     manager.start
   end
 
@@ -141,21 +151,14 @@ describe "a fucked situation" do
 
   it "should publish a message" do
     queue.publish("result")
-    Timeout.timeout(2) do
+    Timeout.timeout(3) do
       holder.pop.should == 'result'
     end
   end
 
-  it "should publish the message the second time" do
+  it "should publish a message second time" do
     queue.publish("result")
-    Timeout.timeout(2) do
-      holder.pop.should == 'result'
-    end
-  end
-
-  it "should publish the message the third time" do
-    queue.publish("result")
-    Timeout.timeout(2) do
+    Timeout.timeout(3) do
       holder.pop.should == 'result'
     end
   end
