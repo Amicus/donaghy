@@ -14,7 +14,7 @@ module Donaghy
     end
 
     def fetch
-      evt = queue.receive
+      evt = defer { queue.receive }
       if evt and !@stopped
         logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}")
         evt.received_on = queue
