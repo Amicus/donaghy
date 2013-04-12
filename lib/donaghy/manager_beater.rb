@@ -17,7 +17,6 @@ module Donaghy
     def cleanup
       @stopped = true
       timer.cancel unless timer.nil?
-      @stopped = true
       logger.info("unsetting donaghy_#{Donaghy.hostname} and #{path_to_beat}")
       Donaghy.storage.remove_from_set("donaghy_#{Donaghy.hostname}", path_to_beat)
       Donaghy.storage.unset(path_to_beat)
@@ -35,9 +34,10 @@ module Donaghy
     # store the configuration in the shared storage every so often, but let it expire, so when we stop beating
     # it will dissolve.
     def beat
-      logger.info("beating: #{path to beat}")
+      return if stopped
+      logger.info("beating: #{path_to_beat} with #{Donaghy.configuration.to_hash}")
       Donaghy.storage.put(path_to_beat, Donaghy.configuration.to_hash, timeout*3)
-      @timer = after(timeout) { beat if !stopped and current_actor.alive? }
+      @timer = after(timeout) { beat if !stopped } unless stopped
       true
     end
   end
