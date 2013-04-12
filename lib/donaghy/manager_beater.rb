@@ -17,7 +17,7 @@ module Donaghy
     def cleanup
       @stopped = true
       timer.cancel unless timer.nil?
-      logger.info("unsetting donaghy_#{Donaghy.hostname} and #{path_to_beat}")
+      logger.info("removing #{path_to_beat} from donaghy_#{Donaghy.hostname} and unsetting")
       Donaghy.storage.remove_from_set("donaghy_#{Donaghy.hostname}", path_to_beat)
       Donaghy.storage.unset(path_to_beat)
     end
@@ -25,6 +25,7 @@ module Donaghy
     # add host to the donaghy_hosts and add the individual service to the hostname
     def start_beating
       Donaghy.storage.add_to_set('donaghy_hosts', Donaghy.hostname)
+      logger.info("adding #{path_to_beat} to donaghy_#{Donaghy.hostname} and starting to beat configuration")
       Donaghy.storage.add_to_set("donaghy_#{Donaghy.hostname}", path_to_beat)
       beat
     end
@@ -35,7 +36,6 @@ module Donaghy
     # it will dissolve.
     def beat
       return if stopped
-      logger.info("beating: #{path_to_beat} with #{Donaghy.configuration.to_hash}")
       Donaghy.storage.put(path_to_beat, Donaghy.configuration.to_hash, timeout*3)
       @timer = after(timeout) { beat if !stopped } unless stopped
       true
