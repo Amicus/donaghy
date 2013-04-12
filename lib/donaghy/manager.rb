@@ -87,6 +87,9 @@ module Donaghy
           signal(:actually_stopped)
         end
       end
+    rescue Exception => e
+      logger.error("manager #{name} error shutting down: #{e.inspect}")
+      signal(:actually_stopped)
     end
 
     def stopped?
