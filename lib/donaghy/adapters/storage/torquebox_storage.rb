@@ -14,7 +14,13 @@ module Donaghy
         # maybe we want to make this optimistic, but for now we have a limited boxes and no real performance
         # issues. Ideally we'd like to not use transactions
         locking_mode = (opts[:locking_mode] || :pessimistic).to_sym
-        @storage = TorqueBox::Infinispan::Cache.new(name: name, mode: mode, locking_mode: locking_mode)
+        transaction_mode = (opts[:transaction_mode] || :transactional).to_sym
+        @storage = TorqueBox::Infinispan::Cache.new({
+            name: name,
+            mode: mode,
+            locking_mode: locking_mode,
+            transaction_mode: transaction_mode
+        })
       end
 
       def flush
