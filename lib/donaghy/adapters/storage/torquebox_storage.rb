@@ -39,7 +39,7 @@ module Donaghy
       end
 
       def add_to_set(key, value)
-        storage.transaction do
+        execute_in_transaction do
           current_value = get(key)
           if current_value and !(current_value.respond_to?(:uniq) or current_value.respond_to?(:push))
             raise NotAnEnumerableError
@@ -52,7 +52,7 @@ module Donaghy
       end
 
       def remove_from_set(key, value)
-        storage.transaction do
+        execute_in_transaction do
           arry = get(key) || []
           put(key, (arry - Array(value)))
         end
@@ -63,14 +63,20 @@ module Donaghy
       end
 
       def inc(key, val=1)
-        storage.transaction do
+        execute_in_transaction do
           @storage.increment(key, val)
         end
       end
 
       def dec(key, val=1)
-        storage.transaction do
+        execute_in_transaction do
           storage.decrement(key, val)
+        end
+      end
+
+      def execute_in_transaction
+        storage.transaction do
+          yield
         end
       end
 
