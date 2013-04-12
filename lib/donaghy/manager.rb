@@ -9,8 +9,6 @@ module Donaghy
     include Celluloid
     include Logging
 
-    class AskedToStop; end
-
     trap_exit :event_handler_died
 
     attr_reader :busy, :available, :fetcher, :stopped, :queue, :events_in_progress, :name, :only_distribute, :beater
@@ -35,7 +33,7 @@ module Donaghy
       @available.length.times do
         assign_work
       end
-      #Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.started", payload: {name: name, fqdn: Donaghy.hostname})
+      Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.started", payload: {name: name, fqdn: Donaghy.hostname})
       true
     end
 
@@ -64,10 +62,12 @@ module Donaghy
     end
 
     def internal_stop(seconds=0)
-      logger.info("manager #{name} stopping the beater")
-      beater.terminate if beater.alive?
       logger.info("manager #{name} stopping the fetcher")
       fetcher.terminate if fetcher.alive?
+
+      logger.info("manager #{name} stopping the beater")
+      beater.terminate if beater.alive?
+
       logger.info("manager #{name} terminating #{available.count} handlers")
       available.each do |handler|
         handler.terminate if handler.alive?
@@ -83,7 +83,7 @@ module Donaghy
             remove_in_progress(busy_handler)
             busy_handler.terminate
           end
-          #Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.stopped", payload: {name: name, fqdn: Donaghy.hostname})
+          Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.stopped", payload: {name: name, fqdn: Donaghy.hostname})
           signal(:actually_stopped)
         end
       end
@@ -110,12 +110,14 @@ module Donaghy
       remove_in_progress(event_handler)
       if stopped?
         event_handler.terminate
-      elsif event_handler.alive?
-        @available << event_handler
       else
-        @available << new_event_handler
+        if event_handler.alive?
+          @available << event_handler
+        else
+          @available << new_event_handler
+        end
+        assign_work
       end
-      assign_work unless stopped?
     end
 
     def handle_event(evt)

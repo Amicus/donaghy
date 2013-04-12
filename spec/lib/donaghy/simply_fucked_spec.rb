@@ -12,9 +12,9 @@ describe "a fucked situation" do
       @queue = Redis.new
     end
 
-    def publish(evt)
-      Donaghy.logger.info("publishing: #{evt}")
-      @queue.rpush(QUEUE_NAME, evt)
+    def publish(str)
+      Donaghy.logger.info("publishing: #{str}")
+      @queue.rpush(QUEUE_NAME, str)
     end
 
     def receive
@@ -47,20 +47,39 @@ describe "a fucked situation" do
 
   class SimpleFetcher
     include Celluloid
+    finalizer :cleanup
 
-    #task_class TaskThread
 
     def initialize(manager, queue)
       @manager = manager
       @queue = queue
+      #@receiver = Receiver.new_link(queue)
     end
 
     def fetch
+      return if @done
       Donaghy.logger.info("fetch started")
       res = @queue.receive
-      Donaghy.logger.info("fetch received: #{res}")
-      res
+
+      if done?
+        Donaghy.logger.info("in the real thing, we'd requeue")
+      else
+        if res
+          @manager.async.handle_result(res)
+        else
+          after(0) { fetch }
+        end
+      end
     end
+
+    def done?
+      !@manager.alive? or @done
+    end
+
+    def cleanup
+      @done = true
+    end
+
 
   end
 
@@ -74,7 +93,7 @@ describe "a fucked situation" do
       @queue = queue
       @concurrency = opts[:concurrency] || Celluloid.ncores
 
-      @fetcher = SimpleFetcher.pool(size: @concurrency, args: [current_actor, @queue])
+      @fetcher = SimpleFetcher.new(current_actor, @queue)
 
       @available = @concurrency.times.map do
         SimpleHandler.new_link(current_actor)
@@ -96,12 +115,16 @@ describe "a fucked situation" do
     end
 
     def assign_work
-      async.handle_result(@fetcher.fetch) unless @stopped
+      Donaghy.logger.info("assign work called")
+      @fetcher.async.fetch unless @stopped
     end
 
     def handle_result(result)
       unless @stopped
+        Donaghy.logger.info("handle result")
+        Donaghy.logger.info("result is: #{result}")
         if result
+          Donaghy.logger.info("sending: #{result} to handler")
           handler = @available.shift
           @busy << handler
           handler.async.handle_result(result)
@@ -137,16 +160,16 @@ describe "a fucked situation" do
   let(:queue) { SIMPLE_QUEUE }
   let(:holder) { Queue.new }
   let(:manager) { SimpleManager.new(queue, holder, concurrency: 5) }
-
-  $redis = Redis.new
+  let(:spec_redis) { Redis.new }
 
   before do
-    $redis.del(SimpleQueue::QUEUE_NAME)
+    spec_redis.del(SimpleQueue::QUEUE_NAME)
     manager.start
   end
 
   after do
     manager.stop
+    spec_redis.quit
   end
 
   it "should publish a message" do
