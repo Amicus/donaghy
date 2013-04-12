@@ -10,6 +10,9 @@ module Donaghy
     include Celluloid
     include Logging
 
+    #fibers have a smaller stack, so let's use threads here
+    task_class TaskThread
+
     def self.default_middleware
       Middleware::Chain.new do |c|
         c.add Middleware::Retry
@@ -32,18 +35,16 @@ module Donaghy
     def handle(event)
       self.beater = HeartBeater.new_link(event, current_actor, beat_timeout)
       beater.async.beat
-      defer do
-        Donaghy.middleware.execute(event, uid: uid, only_distribute: only_distribute, manager_name: manager.name) do
-          if only_distribute
-            if event.path.start_with?('donaghy/')
-              handle_locally(event)
-            else
-              logger.info("#{uid} is remote distributing event")
-              RemoteDistributor.new.handle_distribution(event)
-            end
-          else
+      Donaghy.middleware.execute(event, uid: uid, only_distribute: only_distribute, manager_name: manager.name) do
+        if only_distribute
+          if event.path.start_with?('donaghy/')
             handle_locally(event)
+          else
+            logger.info("#{uid} is remote distributing event")
+            RemoteDistributor.new.handle_distribution(event)
           end
+        else
+          handle_locally(event)
         end
       end
       logger.info("#{uid} complete, acknowledging event")

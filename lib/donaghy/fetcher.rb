@@ -4,7 +4,8 @@ module Donaghy
   class Fetcher
     include Celluloid
     include Logging
-    task_class TaskThread
+
+    finalizer :cleanup
 
     attr_reader :manager, :queue, :manager_name
     def initialize(manager, queue, opts={})
@@ -14,24 +15,30 @@ module Donaghy
     end
 
     def fetch
-      evt = defer { queue.receive }
-      if evt and !@stopped
-        logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}")
-        evt.received_on = queue
-        manager.async.handle_event(evt)
-      elsif evt and @stopped
+      return if @stopped
+      evt = queue.receive
+
+      if done? and evt
         evt.received_on = queue
         logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}, requeing because stopped")
         evt.requeue
       else
-        after(0) { fetch if !@stopped and manager.alive? } if !@stopped and manager.alive?
+        if evt
+          logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}")
+          evt.received_on = queue
+          manager.async.handle_event(evt)
+        else
+          after(0) { fetch } unless done?
+        end
       end
     end
 
-    def terminate
-      logger.info("stop fetching received")
+    def done?
+      !manager.alive? or @stopped
+    end
+
+    def cleanup
       @stopped = true
-      super
     end
 
   end

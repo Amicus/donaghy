@@ -2,6 +2,8 @@ module Donaghy
   class HeartBeater
     include Celluloid
 
+    finalizer :cleanup
+
     attr_reader :event, :timeout, :timer, :handler
     def initialize(event, handler, timeout=5)
       @handler = handler
@@ -10,13 +12,8 @@ module Donaghy
       @timer = nil
     end
 
-    def terminate
-      timer.cancel unless timer.nil?
-      super
-    end
-
     def beat
-      defer { event.heartbeat(timeout*3) } #we multiply by 3 to account for errors
+      event.heartbeat(timeout*3) #we multiply by 3 to account for errors
       @timer = after(timeout) do
         if current_actor.alive? and handler.alive?
           beat
@@ -25,6 +22,10 @@ module Donaghy
         end
       end
       true
+    end
+
+    def cleanup
+      timer.cancel unless timer.nil?
     end
   end
 end
