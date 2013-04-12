@@ -23,7 +23,7 @@ module Donaghy
         end
 
         def receive
-          Timeout.timeout(2) do
+          Timeout.timeout(5) do
             msg = queue.pop
             Event.from_json(msg) if msg
           end
