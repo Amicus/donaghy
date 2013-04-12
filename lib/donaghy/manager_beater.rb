@@ -1,6 +1,9 @@
 module Donaghy
   class ManagerBeater
     include Celluloid
+    include Logging
+
+    finalizer :cleanup
 
     attr_reader :name, :timeout, :timer, :stopped, :path_to_beat
     def initialize(name, timeout=10)
@@ -11,12 +14,13 @@ module Donaghy
       @path_to_beat = "donaghy_#{Donaghy.hostname}_#{name}"
     end
 
-    def terminate
+    def cleanup
+      @stopped = true
       timer.cancel unless timer.nil?
       @stopped = true
+      logger.info("unsetting donaghy_#{Donaghy.hostname} and #{path_to_beat}")
       Donaghy.storage.remove_from_set("donaghy_#{Donaghy.hostname}", path_to_beat)
       Donaghy.storage.unset(path_to_beat)
-      super
     end
 
     # add host to the donaghy_hosts and add the individual service to the hostname
@@ -31,6 +35,7 @@ module Donaghy
     # store the configuration in the shared storage every so often, but let it expire, so when we stop beating
     # it will dissolve.
     def beat
+      logger.info("beating: #{path to beat}")
       Donaghy.storage.put(path_to_beat, Donaghy.configuration.to_hash, timeout*3)
       @timer = after(timeout) { beat if !stopped and current_actor.alive? }
       true
