@@ -23,5 +23,15 @@ module Donaghy
       subject.fetch
     end
 
+    it "should not take more than max time to shut down the fetcher even if jobs are queued" do
+      new_fetcher = Fetcher.new(fake_manager, queue)
+      100.times do
+        new_fetcher.async.fetch
+      end
+      Timeout.timeout(5) do
+        new_fetcher.terminate
+      end
+    end
+
   end
 end
