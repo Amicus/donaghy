@@ -28,7 +28,7 @@ module Donaghy
       100.times do
         new_fetcher.async.fetch
       end
-      Timeout.timeout(5) do
+      Timeout.timeout(8) do
         new_fetcher.terminate
       end
     end
