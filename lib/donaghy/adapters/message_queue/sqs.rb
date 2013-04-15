@@ -33,6 +33,10 @@ module Donaghy
       logger.warn("could not requeue #{id} #{path} due to #{e.inspect}")
     end
 
+    def retry_count
+      sqs_message.receive_count
+    end
+
   end
 
   module MessageQueue

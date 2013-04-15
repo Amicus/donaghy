@@ -3,14 +3,14 @@ module Donaghy
     class Retry
       include Logging
 
-      MAX_RETRY_ATTEMPTS = 25
+      MAX_RETRY_ATTEMPTS = 200 # 15 minute max, so about 50 hours
 
       def call(event, _)
         yield
       rescue Exception => e
         event.retry_count += 1
         if event.retry_count > MAX_RETRY_ATTEMPTS
-          logger.warn("event failed over #{MAX_RETRY_ATTEMPTS} times")
+          logger.error("event failed over #{MAX_RETRY_ATTEMPTS} times")
         else
           Donaghy.storage.inc('retry', 1)
           event.requeue(delay: delay(event))
