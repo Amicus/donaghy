@@ -28,6 +28,7 @@ module Donaghy
     CONFIG_GUARD.synchronize do
       @event_publisher = EventPublisher.new unless @event_publisher
     end
+    @event_publisher
   end
 
   def self.logger
@@ -62,9 +63,9 @@ module Donaghy
   def self.local_storage
     return @local_storage if @local_storage
     CONFIG_GUARD.synchronize do
-      return @local_storage if @local_storage
-      @local_storage = Donaghy::Storage::InMemory.new
+      @local_storage = Donaghy::Storage::InMemory.new unless @local_storage
     end
+    @local_storage
   end
 
   def self.message_queue
@@ -129,7 +130,11 @@ module Donaghy
   end
 
   def self.hostname
-    @hostname ||= Socket.gethostname
+    return @hostname if @hostname
+    CONFIG_GUARD.synchronize do
+      @hostname = Socket.gethostname unless @hostname
+    end
+    @hostname
   end
 
   def self.default_config
