@@ -11,6 +11,7 @@ module Donaghy
         event.retry_count += 1
         if event.retry_count > MAX_RETRY_ATTEMPTS
           logger.error("event failed over #{MAX_RETRY_ATTEMPTS} times")
+          event.acknowledge
         else
           Donaghy.storage.inc('retry', 1)
           event.requeue(delay: delay(event))
