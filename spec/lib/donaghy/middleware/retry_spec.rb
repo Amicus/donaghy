@@ -27,12 +27,19 @@ module Donaghy
 
       before do
         event.stub(:path).and_raise(StandardError)
-         ->() { event_handler.handle(event) }.should raise_error(StandardError)
       end
 
       it "should inc the retry count on the event" do
+        ->() { event_handler.handle(event) }.should raise_error(StandardError)
         event.retry_count.should == 1
       end
+
+      it "should acknowledge the event if it has reached the maximum number of retries" do
+        event.retry_count = Retry::MAX_RETRY_ATTEMPTS
+        event.should_receive(:acknowledge).exactly(1).times
+        ->() { event_handler.handle(event) }.should raise_error(StandardError)
+      end
+
 
     end
 
