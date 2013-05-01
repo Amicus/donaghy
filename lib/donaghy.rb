@@ -1,6 +1,7 @@
 require 'monitor'
 require 'celluloid'
 require 'socket'
+require 'donaghy/version'
 
 module Donaghy
   ROOT_QUEUE = "global_event"
