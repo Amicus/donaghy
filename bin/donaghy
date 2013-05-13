@@ -14,8 +14,8 @@ command :run do |c|
     require 'donaghy/cluster_node'
 
     if File.exist?("config/boot.rb") and File.exist?("config/environment.rb")
-      require "config/boot"
-      require "config/environment"
+      require File.join(Dir.pwd, "config", "boot")
+      require File.join(Dir.pwd, "config", "environment")
       ::Rails.application.eager_load!
     end
 
