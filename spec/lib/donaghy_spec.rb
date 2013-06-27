@@ -4,9 +4,6 @@ require 'socket'
 module Donaghy
 
   describe Donaghy do
-    it "should be true" do
-      true.should == true
-    end
 
     it "should set message queue via a string" do
       Donaghy.reset

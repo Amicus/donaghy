@@ -37,9 +37,11 @@ module Donaghy
       mock_queue.should_receive(:publish) do |event|
         event.path.should == "#{root_path}/base_service/#{event_path}"
         event.payload.cool.should be_true
+        event.timer.should == 10
+        event.value.should == 5
         true
       end
-      base_service.trigger(event_path, payload: {cool: true})
+      base_service.trigger(event_path, payload: {cool: true}, timer: 10, value: 5)
     end
 
     it "should BaseService.subscribe_to_global_events" do
