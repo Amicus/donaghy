@@ -63,6 +63,7 @@ module Donaghy
     ### private instance api (but can't be private because internals use these)
 
     def distribute_event(event)
+      puts event.to_s + " distribute_event testingg"
       receives_hash.each_pair do |pattern, meth_and_options|
         if File.fnmatch(pattern, event.path)
           meth = method(meth_and_options[:method].to_sym)
@@ -97,6 +98,7 @@ module Donaghy
     end
 
     def event_from_options(path, opts)
+      puts opts.to_s + " event_from_options testingg "
       generated_by = Array(opts[:generated_by]).dup
       generated_by.unshift(path)
       Event.from_hash(opts.merge(path: path, generated_by: generated_by))
