@@ -30,7 +30,6 @@ module Donaghy
     end
 
     def handle(event)
-      logger.warn(event.to_s + " handle testingg ")
       self.beater = HeartBeater.new_link(event, current_actor, beat_timeout)
       beater.async.beat
       defer do

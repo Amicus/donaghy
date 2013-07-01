@@ -63,7 +63,6 @@ module Donaghy
     ### private instance api (but can't be private because internals use these)
 
     def distribute_event(event)
-      logger.warn( event.to_s + " distribute_event testingg")
       receives_hash.each_pair do |pattern, meth_and_options|
         if File.fnmatch(pattern, event.path)
           meth = method(meth_and_options[:method].to_sym)
