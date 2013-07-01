@@ -14,7 +14,7 @@ module Donaghy
       new(hsh.merge(without_append: true))
     end
 
-    # (topper) we use value and timer for sending to errplane (at least)
+    # (topper) we use value, timer,context for sending to errplane (at least)
     ATTRIBUTE_METHODS = [
         :id,
         :version,
@@ -24,6 +24,8 @@ module Donaghy
         :path,
         :value,
         :timer,
+        :context,
+        :dimensions,
         :received_on,
         :retry_count,
     ]
@@ -76,7 +78,7 @@ module Donaghy
     end
 
     def ==(other)
-      !((ATTRIBUTE_METHODS - [:id, :generated_at, :retry_count, :received_on, :timer, :value]).detect {|method| self.send(method) != other.send(method) })
+      !((ATTRIBUTE_METHODS - [:id, :generated_at, :retry_count, :received_on, :timer, :value, :context, :dimensions]).detect {|method| self.send(method) != other.send(method) })
     end
 
     def acknowledge
