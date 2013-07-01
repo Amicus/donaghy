@@ -39,9 +39,10 @@ module Donaghy
         event.payload.cool.should be_true
         event.timer.should == 10
         event.value.should == 5
+        event.context.should == 'peregrine'
         true
       end
-      base_service.trigger(event_path, payload: {cool: true}, timer: 10, value: 5)
+      base_service.trigger(event_path, payload: {cool: true}, timer: 10, value: 5, context: 'peregrine')
     end
 
     it "should BaseService.subscribe_to_global_events" do
