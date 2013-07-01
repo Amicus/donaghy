@@ -34,6 +34,8 @@ module Donaghy
         assign_work
       end
       Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.started", payload: {name: name, fqdn: Donaghy.hostname})
+      Donaghy.event_publisher.trigger("jelkins/test", value: 123)
+      Donaghy.event_publisher.trigger("jelkins/test", value: {number: 123})
       true
     end
 
