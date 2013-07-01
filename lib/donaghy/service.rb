@@ -97,7 +97,6 @@ module Donaghy
     end
 
     def event_from_options(path, opts)
-      logger.warn( opts.to_s + " event_from_options testingg ")
       generated_by = Array(opts[:generated_by]).dup
       generated_by.unshift(path)
       Event.from_hash(opts.merge(path: path, generated_by: generated_by))
