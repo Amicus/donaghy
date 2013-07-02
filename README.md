@@ -47,7 +47,7 @@ You then list out the services - these are the classes handling pub-sub style. Y
 
 ## Usage
 
-There are two ways to define donaghy workers.  The first will be familiar to sidekiq and resqueue users:
+There are two ways to define donaghy workers.  The first will be familiar to sidekiq and resque users:
 
 ```ruby
 class MyBackgroundWorker
