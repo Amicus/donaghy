@@ -39,10 +39,12 @@ module Donaghy
         event.payload.cool.should be_true
         event.timer.should == 10
         event.value.should == 5
+        event.dimensions[:organization].should == "United Wolf Lovers"
+        event.dimensions[:user].should == "Jack Black"
         event.context.should == 'peregrine'
         true
       end
-      base_service.trigger(event_path, payload: {cool: true}, timer: 10, value: 5, context: 'peregrine')
+      base_service.trigger(event_path, payload: {cool: true}, timer: 10, value: 5, context: 'peregrine', dimensions: {organization: "United Wolf Lovers", user: "Jack Black"})
     end
 
     it "should BaseService.subscribe_to_global_events" do
