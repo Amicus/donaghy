@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'donaghy'
 require 'commander/import'
-
+require 'logger'
 # :name is optional, otherwise uses the basename of this executable
 program :name, 'Donagy CLI'
 program :version, Donaghy::VERSION
@@ -17,13 +17,14 @@ command :run do |c|
       require File.join(Dir.pwd, "config", "boot")
       require File.join(Dir.pwd, "config", "environment")
       ::Rails.application.eager_load!
+      ::Rails.logger = Donaghy.logger = Logger.new($stdout)
     end
-
     raise "no config file" unless File.exists?("config/donaghy.yml")
     say "running donaghy with config file #{File.expand_path("config/donaghy.yml")}"
     Donaghy.configuration = {config_file: File.expand_path("config/donaghy.yml")}
     $cluster_node = Donaghy::ClusterNode.new
     t = Thread.new do
+      say "donaghy blocking start"
       $cluster_node.blocking_start
     end
     t.join
