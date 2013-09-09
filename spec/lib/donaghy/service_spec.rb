@@ -63,4 +63,66 @@ module Donaghy
       BaseService.handler.pop.last.should == event
     end
   end
+  #specs for updated non-url Donaghy
+  describe "an class that listens for the created action" do
+    before do
+      class HappyService
+        include Donaghy::Service
+
+        receives "calls", :dat_call_doe, action: "created"
+        receives "calls", :handle_update, action: "updated"
+        receives "calls", :always_called, action: "all"
+
+        def dat_call_doe(path, event)
+          true
+        end
+        def handle_update(path, event)
+          false
+        end
+        def always_called(path, event)
+          true
+        end
+      end
+    end
+
+    describe "when an instance is distributed an event with a created action" do
+      before do
+        @event = Event.new(path: "calls", dimensions: {action: "created"})
+        @service = HappyService.new
+      end
+      it "should call the associated method" do
+        @service.should_receive(:dat_call_doe)
+        @service.should_receive(:always_called)
+        @service.should_not_receive(:handle_update)
+        @service.distribute_event(@event)
+      end
+    end
+
+    describe "when an instance is distributed an event with a different action" do
+      before do
+        @event = Event.new(path: "calls", dimensions: {action: "deleted"})
+        @service = HappyService.new
+      end
+      it "should not called the associated method" do
+        @service.should_receive(:always_called)
+        @service.should_not_receive(:dat_call_doe)
+        @service.should_not_receive(:handle_update)
+        @service.distribute_event(@event)
+      end
+    end
+
+    describe "when an instance is distrubed an event with an unrelated event" do
+      before do
+        @event = Event.new(path: "unused", dimensions: {action: "created"})
+        @service = HappyService.new
+      end
+      it "should not call any of its handlers" do
+        @service.should_not_receive(:always_called)
+        @service.should_not_receive(:dat_call_doe)
+        @service.should_not_receive(:handle_update)
+        @service.distribute_event(@event)
+      end
+    end
+  end
+
 end

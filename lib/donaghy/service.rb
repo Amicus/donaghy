@@ -15,7 +15,12 @@ module Donaghy
       ##### public Class API
 
       def receives(pattern, meth, opts = {})
-        receives_hash[pattern] = {method: meth, options: opts}
+        action = opts[:action] || "" #back comptabile / no action
+        if action != ""
+          receives_hash["#{pattern}_#{action}"] = {method: meth, options: opts}
+        else
+          receives_hash[pattern] = {method: meth, options: opts}
+        end
       end
 
       def perform_async(*args)
@@ -64,7 +69,7 @@ module Donaghy
 
     def distribute_event(event)
       receives_hash.each_pair do |pattern, meth_and_options|
-        if File.fnmatch(pattern, event.path)
+        if backwards_compatabile_is_match?(pattern, event) || is_match?(event, pattern)
           meth = method(meth_and_options[:method].to_sym)
           # this is in here to support path, event which is unnecessary if you're just sending events around
           # as they have a path method
@@ -76,6 +81,15 @@ module Donaghy
           end
         end
       end
+    end
+
+    def backwards_compatabile_is_match?(pattern, event)
+      File.fnmatch(pattern, event.path)
+    end
+
+    def is_match?(event, pattern)
+      event_action = event.dimensions[:action] if event.dimensions
+      pattern == "#{event.path}_#{event_action}" || pattern == "#{event.path}_all"
     end
 
     def perform_async(*args)
