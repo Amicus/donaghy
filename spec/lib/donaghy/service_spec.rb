@@ -10,7 +10,7 @@ module Donaghy
         class_attribute :handler
         self.handler = ::Queue.new
 
-        receives "sweet/*", :handle_sweet_pie
+        receives "sweet", :handle_sweet_pie
 
         def handle_sweet_pie(path, evt)
           self.class.handler << [path, evt]
@@ -18,8 +18,8 @@ module Donaghy
       end
     end
 
-    let(:subscribed_event_path) { "sweet/*" }
-    let(:event_path) { "sweet/pie" }
+    let(:subscribed_event_path) { "sweet" }
+    let(:event_path) { "sweet" }
     let(:root_path) { Donaghy.root_event_path }
     let(:event_path_with_root) { "#{root_path}/#{event_path}"}
     let(:base_service) { BaseService.new }
@@ -72,10 +72,6 @@ module Donaghy
         receives "calls", :dat_call_doe, action: "created"
         receives "calls", :handle_update, action: "updated"
         receives "calls", :always_called, action: "all"
-
-        def dat_call_doe(path, event)
-          true
-        end
         def handle_update(path, event)
           false
         end

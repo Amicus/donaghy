@@ -15,12 +15,8 @@ module Donaghy
       ##### public Class API
 
       def receives(pattern, meth, opts = {})
-        action = opts[:action] || "" #back comptabile / no action
-        if action != ""
-          receives_hash["#{pattern}_#{action}"] = {method: meth, options: opts}
-        else
-          receives_hash[pattern] = {method: meth, options: opts}
-        end
+        action = opts[:action] || "all"
+        receives_hash["#{pattern}_#{action}"] = {method: meth, options: opts}
       end
 
       def perform_async(*args)
@@ -40,6 +36,7 @@ module Donaghy
 
       def subscribe_to_global_events
         receives_hash.each_pair do |pattern, meth_and_options|
+          pattern = event_name(pattern)
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.default_queue_name, self.name]}"
           EventSubscriber.new.subscribe(pattern, Donaghy.default_queue_name, self.name)
         end
@@ -48,11 +45,17 @@ module Donaghy
       #this is for shutting down a service for good
       def unsubscribe_all_instances
         receives_hash.each_pair do |pattern, meth_and_options|
+          pattern = event_name(pattern)
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.default_queue_name, self.name]}"
           EventUnsubscriber.new.unsubscribe(pattern, Donaghy.default_queue_name, self.name)
         end
       end
+
+      def event_name(pattern)
+        pattern.split("_")[0]
+      end
     end
+
 
     ### Public Instance API
     def trigger(path, opts = {})
@@ -69,7 +72,7 @@ module Donaghy
 
     def distribute_event(event)
       receives_hash.each_pair do |pattern, meth_and_options|
-        if backwards_compatabile_is_match?(pattern, event) || is_match?(event, pattern)
+        if is_match?(event, pattern)
           meth = method(meth_and_options[:method].to_sym)
           # this is in here to support path, event which is unnecessary if you're just sending events around
           # as they have a path method
@@ -83,13 +86,16 @@ module Donaghy
       end
     end
 
-    def backwards_compatabile_is_match?(pattern, event)
-      File.fnmatch(pattern, event.path)
-    end
+    # def backwards_compatabile_is_match?(pattern, event)
+    #   File.fnmatch(pattern, event.path)
+    # end
 
     def is_match?(event, pattern)
-      event_action = event.dimensions[:action] if event.dimensions
-      pattern == "#{event.path}_#{event_action}" || pattern == "#{event.path}_all"
+      if event.dimensions && event_action = event.dimensions[:action]
+        pattern == "#{event.path}_#{event_action}" || pattern == "#{event.path}_all"
+      else
+        pattern.split('_')[0] == event.path
+      end
     end
 
     def perform_async(*args)
