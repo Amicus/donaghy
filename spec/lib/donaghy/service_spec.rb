@@ -72,6 +72,9 @@ module Donaghy
         receives "calls", :dat_call_doe, action: "created"
         receives "calls", :handle_update, action: "updated"
         receives "calls", :always_called, action: "all"
+
+        def dat_call_doe(path, event)
+        end
         def handle_update(path, event)
           false
         end
