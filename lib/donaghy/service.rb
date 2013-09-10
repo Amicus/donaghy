@@ -52,7 +52,7 @@ module Donaghy
       end
 
       def event_name(pattern)
-        pattern.split("_")[0]
+        pattern.gsub(/_[^_]+\z/, "")
       end
     end
 
@@ -94,7 +94,7 @@ module Donaghy
       if event.dimensions && event_action = event.dimensions[:action]
         pattern == "#{event.path}_#{event_action}" || pattern == "#{event.path}_all"
       else
-        pattern.split('_')[0] == event.path
+        self.class.event_name(pattern) == event.path
       end
     end
 
