@@ -86,7 +86,7 @@ module Donaghy
     end
 
     def is_pattern_match?(event_path, path_listening_to)
-      event_path === path_listening_to || Regexp.new(path_listening_to) === event_path
+      File.fnmatch(event_path, path_listening_to) || Regexp.new(path_listening_to) === event_path #add File.fnmatch in
     end
 
     def method_for_action(actions, event_action)
