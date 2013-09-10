@@ -40,6 +40,8 @@ module Donaghy
         receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.default_queue_name, self.name]}"
           EventSubscriber.new.subscribe(pattern, Donaghy.default_queue_name, self.name)
+          Donaghy.logger.info "subscribing to deprecated pattern for #{pattern} as well #{[Donaghy.default_queue_name, self.name]}"
+          EventSubscriber.new.subscribe(event_path(pattern), Donaghy.default_queue_name, self.name)
         end
       end
 
@@ -48,6 +50,7 @@ module Donaghy
         receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.default_queue_name, self.name]}"
           EventUnsubscriber.new.unsubscribe(pattern, Donaghy.default_queue_name, self.name)
+          EventUnsubscriber.new.unsubscribe(event_path(pattern), Donaghy.default_queue_name, self.name)
         end
       end
 
@@ -71,7 +74,7 @@ module Donaghy
       event_path = event.path #add parity of method back in for backwards compatiability
 
       receives_hash.each_pair do |saved_pattern, actions|
-        if is_pattern_match?(event_path, saved_pattern)
+        if is_match?(event_path, saved_pattern) || is_deprecated_match?(event, saved_pattern)
           fire_all_handler(event_path, action_of_event, saved_pattern, event)
           if method_name = method_for_action(actions, action_of_event)
             send(method_name, event)
@@ -80,11 +83,19 @@ module Donaghy
       end
     end
 
+    def is_deprecated_match?(event, saved_pattern)
+      if !event.dimensions
+        false
+      elsif event_deprecated_path = event.dimensions[:deprecated_path]
+        is_pattern_match?(event_deprecated_path, saved_pattern) if event_deprecated_path
+      end
+    end
+
     def fire_all_handler(event_path, event_action, saved_pattern, event)
       send(receives_hash[saved_pattern]["all"][:method].to_sym, event) if receives_hash[saved_pattern].include?("all")
     end
 
-    def is_pattern_match?(event_path, path_listening_to)
+    def is_match?(event_path, path_listening_to)
       if File.fnmatch(path_listening_to, event_path)
         true
       else
