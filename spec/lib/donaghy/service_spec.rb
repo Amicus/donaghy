@@ -31,7 +31,7 @@ module Donaghy
       base_service.root_trigger(event_path, payload: "cool")
     end
 
-    it "should #trigger" do
+    it "should #root_trigger and carry the dimensions" do
       mock_queue = mock(:queue, publish: true)
       Donaghy.stub(:root_queue).and_return(mock_queue)
       mock_queue.should_receive(:publish) do |event|
@@ -47,7 +47,7 @@ module Donaghy
         event.context.should == 'peregrine'
         true
       end
-      base_service.trigger(event_path, payload: {cool: true}, timer: 10, value: 5, context: 'peregrine', dimensions: {organization: "United Wolf Lovers", user: "Jack Black"})
+      base_service.root_trigger(event_path, payload: {cool: true}, timer: 10, value: 5, context: 'peregrine', dimensions: {organization: "United Wolf Lovers", user: "Jack Black"})
     end
 
     it "should BaseService.subscribe_to_global_events" do

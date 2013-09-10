@@ -5,6 +5,8 @@ module Donaghy
   module Service
     SIDEKIQ_EVENT_PREFIX = "donaghy/sidekiq_emulator/"
 
+    class CalledTriggerError < StandardError; end
+
     def self.included(klass)
       klass.class_attribute :donaghy_options
       klass.class_attribute :internal_root_path
@@ -54,11 +56,15 @@ module Donaghy
     end
 
     ### Public Instance API
-    alias_method :root_trigger, :trigger
-    def trigger(path, opts = {})
+    def root_trigger(path, opts = {})
       logger.info "#{self.class.name} is triggering: #{path} with #{opts.inspect}"
       global_publish(path, opts)
     end
+
+    def trigger(path, opts = {})
+      raise CalledTriggerError
+    end
+
 
     ### private instance api (but can't be private because internals use these)
     def distribute_event(event)
