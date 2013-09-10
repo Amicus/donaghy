@@ -58,13 +58,9 @@ module Donaghy
 
 
     ### Public Instance API
+    alias_method :root_trigger, :trigger
     def trigger(path, opts = {})
       logger.info "#{self.class.name} is triggering: #{path} with #{opts.inspect}"
-      global_publish(path, opts)
-    end
-
-    def root_trigger(path, opts = {})
-      logger.info "#{self.class.name} is global_root_triggering: #{path} with #{opts.inspect}"
       global_publish(path, opts)
     end
 
