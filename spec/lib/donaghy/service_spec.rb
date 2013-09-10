@@ -74,6 +74,7 @@ module Donaghy
         receives "calls", :always_called, action: "all"
         receives ".*", :called_every_time_actually
         receives "**.rb", :old_style
+        receives "**.html", :not_hit
 
         def dat_call_doe(event)
         end
@@ -84,6 +85,8 @@ module Donaghy
         def called_every_time_actually(event)
         end
         def old_style
+        end
+        def not_hit
         end
       end
     end

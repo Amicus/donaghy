@@ -86,7 +86,15 @@ module Donaghy
     end
 
     def is_pattern_match?(event_path, path_listening_to)
-      File.fnmatch(path_listening_to, event_path) || Regexp.new(path_listening_to) === event_path
+      if File.fnmatch(path_listening_to, event_path)
+        true
+      else
+        begin
+          Regexp.new(path_listening_to) === event_path
+        rescue RegexpError => e
+          false
+        end
+      end
     end
 
     def method_for_action(actions, event_action)
