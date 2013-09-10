@@ -66,20 +66,12 @@ module Donaghy
       event_path = event.path #add parity of method back in for backwards compatiability
 
       receives_hash.each_pair do |saved_pattern, actions|
-        if is_match?(event_path, saved_pattern) || is_deprecated_match?(event, saved_pattern)
+        if is_match?(event_path, saved_pattern)
           fire_all_handler(event_path, action_of_event, saved_pattern, event)
           if method_name = method_for_action(actions, action_of_event)
             send(method_name, event)
           end
         end
-      end
-    end
-
-    def is_deprecated_match?(event, saved_pattern)
-      if !event.dimensions
-        false
-      elsif event_deprecated_path = event.dimensions[:deprecated_path]
-        is_pattern_match?(event_deprecated_path, saved_pattern) if event_deprecated_path
       end
     end
 
