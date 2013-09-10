@@ -35,12 +35,15 @@ module Donaghy
       mock_queue = mock(:queue, publish: true)
       Donaghy.stub(:root_queue).and_return(mock_queue)
       mock_queue.should_receive(:publish) do |event|
-        event.path.should == "#{root_path}/base_service/#{event_path}"
+        event.path.should == "#{event_path}"
         event.payload.cool.should be_true
         event.timer.should == 10
         event.value.should == 5
         event.dimensions[:organization].should == "United Wolf Lovers"
         event.dimensions[:user].should == "Jack Black"
+        event.dimensions[:deprecated_path].should == "#{root_path}/base_service/#{event_path}"
+        event.dimensions[:file_origin].should == "base_service"
+        event.dimensions[:application_origin].should == "#{root_path}"
         event.context.should == 'peregrine'
         true
       end

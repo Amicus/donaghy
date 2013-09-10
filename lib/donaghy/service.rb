@@ -56,8 +56,8 @@ module Donaghy
 
     ### Public Instance API
     def trigger(path, opts = {})
-      logger.info "#{self.class.name} is triggering: #{event_path(path)} with #{opts.inspect}"
-      global_publish(event_path(path), opts)
+      logger.info "#{self.class.name} is triggering: #{path} with #{opts.inspect}"
+      global_publish(path, opts)
     end
 
     def root_trigger(path, opts = {})
@@ -66,10 +66,9 @@ module Donaghy
     end
 
     ### private instance api (but can't be private because internals use these)
-
     def distribute_event(event)
       action_of_event = event.dimensions[:action] if event.dimensions
-      event_path = event.path
+      event_path = event.path #add parity of method back in for backwards compatiability
 
       receives_hash.each_pair do |saved_pattern, actions|
         if is_pattern_match?(event_path, saved_pattern)
@@ -123,9 +122,20 @@ module Donaghy
     end
 
     def event_from_options(path, opts)
+      add_event_origin!(path, opts)
       generated_by = Array(opts[:generated_by]).dup
       generated_by.unshift(path)
       Event.from_hash(opts.merge(path: path, generated_by: generated_by))
+    end
+
+    def add_event_origin!(path, opts)
+      dimensions = opts[:dimensions] || {}
+      dimensions.merge!({
+          deprecated_path: event_path(path),
+          file_origin: internal_root,
+          application_origin: root_event_path
+        })
+      opts[:dimensions] = dimensions
     end
 
     def event_path(path)
