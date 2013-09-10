@@ -72,6 +72,7 @@ module Donaghy
         receives "calls", :dat_call_doe, action: "created"
         receives "calls", :handle_update, action: "updated"
         receives "calls", :always_called, action: "all"
+        receives ".*", :called_every_time_actually
 
         def dat_call_doe(event)
         end
@@ -79,6 +80,9 @@ module Donaghy
           false
         end
         def always_called(event)
+          true
+        end
+        def called_every_time_actually(event)
           true
         end
       end
@@ -92,6 +96,7 @@ module Donaghy
       it "should call the associated method" do
         @service.should_receive(:dat_call_doe)
         @service.should_receive(:always_called)
+        @service.should_receive(:called_every_time_actually)
         @service.should_not_receive(:handle_update)
         @service.distribute_event(@event)
       end
@@ -104,6 +109,7 @@ module Donaghy
       end
       it "should not called the associated method" do
         @service.should_receive(:always_called)
+        @service.should_receive(:called_every_time_actually)
         @service.should_not_receive(:dat_call_doe)
         @service.should_not_receive(:handle_update)
         @service.distribute_event(@event)
@@ -115,7 +121,8 @@ module Donaghy
         @event = Event.new(path: "unused", dimensions: {action: "created"})
         @service = HappyService.new
       end
-      it "should not call any of its handlers" do
+      it "should call only the handler which is a regex listening for all" do
+        @service.should_receive(:called_every_time_actually)
         @service.should_not_receive(:always_called)
         @service.should_not_receive(:dat_call_doe)
         @service.should_not_receive(:handle_update)
