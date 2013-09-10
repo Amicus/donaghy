@@ -12,8 +12,8 @@ module Donaghy
 
         receives "sweet", :handle_sweet_pie
 
-        def handle_sweet_pie(path, evt)
-          self.class.handler << [path, evt]
+        def handle_sweet_pie(evt)
+          self.class.handler << [evt.path, evt]
         end
       end
     end
@@ -73,12 +73,12 @@ module Donaghy
         receives "calls", :handle_update, action: "updated"
         receives "calls", :always_called, action: "all"
 
-        def dat_call_doe(path, event)
+        def dat_call_doe(event)
         end
-        def handle_update(path, event)
+        def handle_update(event)
           false
         end
-        def always_called(path, event)
+        def always_called(event)
           true
         end
       end

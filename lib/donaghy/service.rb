@@ -15,8 +15,10 @@ module Donaghy
       ##### public Class API
 
       def receives(pattern, meth, opts = {})
+        #nested hash of top_level_event -> actions -> handler
         action = opts[:action] || "all"
-        receives_hash["#{pattern}_#{action}"] = {method: meth, options: opts}
+        receives_hash[pattern] = {} unless receives_hash.include?(pattern)
+        receives_hash[pattern][action] = {method: meth, options: opts}
       end
 
       def perform_async(*args)
@@ -35,8 +37,7 @@ module Donaghy
       end
 
       def subscribe_to_global_events
-        receives_hash.each_pair do |pattern, meth_and_options|
-          pattern = event_name(pattern)
+        receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.default_queue_name, self.name]}"
           EventSubscriber.new.subscribe(pattern, Donaghy.default_queue_name, self.name)
         end
@@ -44,16 +45,12 @@ module Donaghy
 
       #this is for shutting down a service for good
       def unsubscribe_all_instances
-        receives_hash.each_pair do |pattern, meth_and_options|
-          pattern = event_name(pattern)
+        receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.default_queue_name, self.name]}"
           EventUnsubscriber.new.unsubscribe(pattern, Donaghy.default_queue_name, self.name)
         end
       end
 
-      def event_name(pattern)
-        pattern.gsub(/_[^_]+\z/, "")
-      end
     end
 
 
@@ -71,30 +68,31 @@ module Donaghy
     ### private instance api (but can't be private because internals use these)
 
     def distribute_event(event)
-      receives_hash.each_pair do |pattern, meth_and_options|
-        if is_match?(event, pattern)
-          meth = method(meth_and_options[:method].to_sym)
-          # this is in here to support path, event which is unnecessary if you're just sending events around
-          # as they have a path method
-          if meth.arity == 1
-            send(meth_and_options[:method].to_sym, event)
-          else
-            logger.warn("DEPRECATION WARNING: #{meth_and_options[:method]} on #{self.class.to_s} still takes (path, event) when it should only take (event)")
-            send(meth_and_options[:method].to_sym, event.path, event)
+      action_of_event = event.dimensions[:action] if event.dimensions
+      event_path = event.path
+
+      receives_hash.each_pair do |saved_pattern, actions|
+        if is_pattern_match?(event_path, saved_pattern)
+          fire_all_handler(event_path, action_of_event, saved_pattern, event)
+          if method_name = method_for_action(actions, action_of_event)
+            send(method_name, event)
           end
         end
       end
     end
 
-    # def backwards_compatabile_is_match?(pattern, event)
-    #   File.fnmatch(pattern, event.path)
-    # end
+    def fire_all_handler(event_path, event_action, saved_pattern, event)
+      send(receives_hash[saved_pattern]["all"][:method].to_sym, event) if receives_hash[saved_pattern].include?("all")
+    end
 
-    def is_match?(event, pattern)
-      if event.dimensions && event_action = event.dimensions[:action]
-        pattern == "#{event.path}_#{event_action}" || pattern == "#{event.path}_all"
-      else
-        self.class.event_name(pattern) == event.path
+    def is_pattern_match?(event_path, path_listening_to)
+      File.fnmatch(event_path, path_listening_to)
+    end
+
+    def method_for_action(actions, event_action)
+      meth_and_options = actions[event_action] if event_action != nil
+      if meth_and_options
+        meth_and_options[:method].to_sym
       end
     end
 
