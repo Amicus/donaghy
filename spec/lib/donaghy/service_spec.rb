@@ -73,7 +73,7 @@ module Donaghy
         receives "calls", :handle_update, action: "updated"
         receives "calls", :always_called, action: "all"
         receives ".*", :called_every_time_actually
-        receives "dog/cat*", :old_style
+        receives "**.rb", :old_style
 
         def dat_call_doe(event)
         end
@@ -131,11 +131,14 @@ module Donaghy
     end
     describe "when an old style event is fired" do
       before do
-        @event = Event.new(path: "dog/catssss")
+        @event = Event.new(path: "dog/catssss.rb")
         @service = HappyService.new
       end
       it "should call the deprecated handler" do
         @service.should_receive(:old_style)
+        @service.should_not_receive(:always_called)
+        @service.should_not_receive(:dat_call_doe)
+        @service.should_not_receive(:handle_update)
         @service.distribute_event(@event)
       end
     end
