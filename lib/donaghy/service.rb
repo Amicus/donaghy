@@ -40,8 +40,6 @@ module Donaghy
         receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.default_queue_name, self.name]}"
           EventSubscriber.new.subscribe(pattern, Donaghy.default_queue_name, self.name)
-          Donaghy.logger.info "subscribing to deprecated pattern for #{pattern} as well #{[Donaghy.default_queue_name, self.name]}"
-          EventSubscriber.new.subscribe(event_path(pattern), Donaghy.default_queue_name, self.name)
         end
       end
 
@@ -50,12 +48,10 @@ module Donaghy
         receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.default_queue_name, self.name]}"
           EventUnsubscriber.new.unsubscribe(pattern, Donaghy.default_queue_name, self.name)
-          EventUnsubscriber.new.unsubscribe(event_path(pattern), Donaghy.default_queue_name, self.name)
         end
       end
 
     end
-
 
     ### Public Instance API
     alias_method :root_trigger, :trigger
