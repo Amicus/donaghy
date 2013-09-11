@@ -86,14 +86,27 @@ module Donaghy
         if is_match?(event_path, saved_pattern)
           fire_all_handler(event_path, action_of_event, saved_pattern, event)
           if method_name = method_for_action(actions, action_of_event)
-            send(method_name, event)
+            fire_handler!(method_name, event)
           end
         end
       end
     end
 
+    def fire_handler!(method_name, event)
+      #this is here to support deprecated handlers of type method_name(path, event)
+      meth = method(method_name)
+      if meth.arity == 1
+        send(method_name, event)
+      else
+        logger.warn("DEPRECATION WARNING: #{method_name} on #{self.class.to_s} still takes (path, event) when it should only take (event)")
+        send(method_name, event.path, event)
+      end
+    end
+
     def fire_all_handler(event_path, event_action, saved_pattern, event)
-      send(receives_hash[saved_pattern][:all][:method].to_sym, event) if receives_hash[saved_pattern].include?(:all)
+      if receives_hash[saved_pattern].include?(:all)
+        fire_handler!(receives_hash[saved_pattern][:all][:method].to_sym, event)
+      end
     end
 
     def is_match?(event_path, path_listening_to)
