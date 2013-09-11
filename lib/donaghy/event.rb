@@ -22,10 +22,9 @@ module Donaghy
         :generated_at,
         :generated_by,
         :path,
-        :value,
         :timer,
         :context,
-        :dimensions,
+        :value,
         :received_on,
         :retry_count,
     ]
@@ -46,10 +45,12 @@ module Donaghy
     end
 
     def payload=(val)
-      @payload = if val.kind_of?(Hash)
+      @payload = if !val
+                   nil
+                 elsif val.kind_of?(Hash)
                    Hashie::Mash.new(val)
                  else
-                   val
+                   Hashie::Mash.new(:value => val)
                  end
     end
 
@@ -78,7 +79,7 @@ module Donaghy
     end
 
     def ==(other)
-      !((ATTRIBUTE_METHODS - [:id, :generated_at, :retry_count, :received_on, :timer, :value, :context, :dimensions]).detect {|method| self.send(method) != other.send(method) })
+      !((ATTRIBUTE_METHODS - [:id, :generated_at, :retry_count, :received_on, :value, :timer, :context]).detect {|method| self.send(method) != other.send(method) })
     end
 
     def acknowledge
