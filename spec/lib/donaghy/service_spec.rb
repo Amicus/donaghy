@@ -162,5 +162,22 @@ module Donaghy
       end
     end
   end
+  describe "a donaghy service with a deprecated listener, ie., method_name(path, event)" do
+    before do
+      class OldTimer
+        include Donaghy::Service
+        receives "hitz", :handle_it_old_school
+
+        def handle_it_old_school(path, event)
+        end
+      end
+      @event = Event.new(path: "hitz")
+      @service = OldTimer.new
+    end
+    it "should correctly hit the method" do
+      @service.should_receive(:handle_it_old_school).with(@event.path, @event)
+      @service.distribute_event(@event)
+    end
+  end
 
 end
