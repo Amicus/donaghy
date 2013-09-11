@@ -65,10 +65,9 @@ module Donaghy
       raise CalledTriggerError
     end
 
-
     ### private instance api (but can't be private because internals use these)
     def distribute_event(event)
-      action_of_event = event.dimensions[:action] if event.dimensions
+      action_of_event = event.payload.dimensions[:action] if event.payload && event.payload[:dimensions]
       event_path = event.path #add parity of method back in for backwards compatiability
 
       receives_hash.each_pair do |saved_pattern, actions|
@@ -123,20 +122,32 @@ module Donaghy
     end
 
     def event_from_options(path, opts)
-      add_event_origin!(path, opts)
+      ensure_payload!(opts)
+      add_event_origin!(path, opts[:payload], opts)
       generated_by = Array(opts[:generated_by]).dup
       generated_by.unshift(path)
       Event.from_hash(opts.merge(path: path, generated_by: generated_by))
     end
 
-    def add_event_origin!(path, opts)
-      dimensions = opts[:dimensions] || {}
+    def add_event_origin!(path, payload, opts)
+      dimensions = payload[:dimensions] || {}
       dimensions.merge!({
           deprecated_path: event_path(path),
           file_origin: internal_root,
           application_origin: root_event_path
         })
-      opts[:dimensions] = dimensions
+      opts[:payload][:dimensions] = dimensions
+    end
+
+    def ensure_payload!(opts)
+      if !opts[:payload]
+        opts.merge!({
+          payload: {}
+          })
+      elsif !opts[:payload].kind_of?(Hash)
+        opts[:payload] = Hashie::Mash.new(:value => opts[:payload])
+      end
+
     end
 
     def event_path(path)

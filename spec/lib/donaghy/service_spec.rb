@@ -39,15 +39,15 @@ module Donaghy
         event.payload.cool.should be_true
         event.timer.should == 10
         event.value.should == 5
-        event.dimensions[:organization].should == "United Wolf Lovers"
-        event.dimensions[:user].should == "Jack Black"
-        event.dimensions[:deprecated_path].should == "#{root_path}/base_service/#{event_path}"
-        event.dimensions[:file_origin].should == "base_service"
-        event.dimensions[:application_origin].should == "#{root_path}"
+        event.payload[:dimensions][:organization].should == "United Wolf Lovers"
+        event.payload[:dimensions][:user].should == "Jack Black"
+        event.payload[:dimensions][:deprecated_path].should == "#{root_path}/base_service/#{event_path}"
+        event.payload[:dimensions][:file_origin].should == "base_service"
+        event.payload[:dimensions][:application_origin].should == "#{root_path}"
         event.context.should == 'peregrine'
         true
       end
-      base_service.root_trigger(event_path, payload: {cool: true}, timer: 10, value: 5, context: 'peregrine', dimensions: {organization: "United Wolf Lovers", user: "Jack Black"})
+    base_service.root_trigger(event_path, value: 5, timer: 10,  context: 'peregrine', payload: {cool: true,  dimensions: {organization: "United Wolf Lovers", user: "Jack Black"}})
     end
 
     it "should BaseService.subscribe_to_global_events" do
@@ -96,7 +96,7 @@ module Donaghy
 
     describe "when an instance is distributed an event with a created action" do
       before do
-        @event = Event.new(path: "calls", dimensions: {action: "created"})
+        @event = Event.new(path: "calls", payload: {dimensions: {action: "created"}})
         @service = HappyService.new
       end
       it "should call the associated method" do
@@ -110,7 +110,7 @@ module Donaghy
 
     describe "when an instance is distributed an event with a different action" do
       before do
-        @event = Event.new(path: "calls", dimensions: {action: "deleted"})
+        @event = Event.new(path: "calls", payload: {dimensions: {action: "deleted"}})
         @service = HappyService.new
       end
       it "should not called the associated method" do
@@ -124,7 +124,7 @@ module Donaghy
 
     describe "when an instance is distrubed an event with an unrelated event" do
       before do
-        @event = Event.new(path: "unused", dimensions: {action: "created"})
+        @event = Event.new(path: "unused", payload: {dimensions: {action: "created"}})
         @service = HappyService.new
       end
       it "should call only the handler which is a regex listening for all" do
