@@ -20,6 +20,18 @@ module Donaghy
 
     end
 
+    class OtherWorker #the fact that this does not inherit is important
+      include Donaghy::Service
+      class_attribute :finished
+      self.finished = Queue.new
+      receives "donaghy/test_worker", :handle_finished
+
+      def handle_finished(evt)
+        sleep 0.001
+        self.class.finished.push(evt)
+      end
+    end
+
     let(:event_path) { "donaghy/test_worker" }
 
     after do
@@ -36,6 +48,7 @@ module Donaghy
     describe "handling an event" do
       before do
         TestWorker.subscribe_to_global_events
+        OtherWorker.subscribe_to_global_events
       end
 
       it "should call the async event_handler_finished  on the manger" do
@@ -54,6 +67,7 @@ module Donaghy
         handler.handle(event)
         Timeout.timeout(1) do
           TestWorker.finished.pop.payload[:cool].should be_true
+          OtherWorker.finished.pop.payload[:cool].should be_true
         end
       end
 
