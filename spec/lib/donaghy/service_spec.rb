@@ -74,7 +74,7 @@ module Donaghy
       end
 
       it "will not inherit the recievies from its paretns" do
-        EventUnsubscriber.any_instance.should_not_receive(:subscribe).with("sweet", Donaghy.default_queue_name, "SonOfBaseService" )
+        EventSubscriber.any_instance.should_not_receive(:subscribe).with("sweet", Donaghy.default_queue_name, "Donaghy::SonOfBaseService" )
         SonOfBaseService.subscribe_to_global_events
       end
     end
