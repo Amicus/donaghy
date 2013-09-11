@@ -65,6 +65,19 @@ module Donaghy
       BaseService.new.distribute_event(event)
       BaseService.handler.pop.last.should == event
     end
+
+    describe "when there is an inherited class" do
+      before do
+        EventSubscriber.any_instance.stub(:subscribe).and_return(:true)
+        class SonOfBaseService < BaseService
+        end
+      end
+
+      it "will not inherit the recievies from its paretns" do
+        EventUnsubscriber.any_instance.should_not_receive(:subscribe).with("sweet", Donaghy.default_queue_name, "SonOfBaseService" )
+        SonOfBaseService.subscribe_to_global_events
+      end
+    end
   end
   #specs for updated non-url Donaghy
   describe "an class that listens for the created action" do
