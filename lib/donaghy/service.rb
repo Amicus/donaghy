@@ -18,7 +18,8 @@ module Donaghy
 
       def receives(pattern, meth, opts = {})
         #nested hash of top_level_event -> actions -> handler
-        action = opts[:action] || "all"
+        action = opts[:action] || :all
+        action = action.to_sym
         receives_hash[pattern] = {} unless receives_hash.include?(pattern)
         receives_hash[pattern][action] = {method: meth, options: opts}
       end
@@ -81,7 +82,7 @@ module Donaghy
     end
 
     def fire_all_handler(event_path, event_action, saved_pattern, event)
-      send(receives_hash[saved_pattern]["all"][:method].to_sym, event) if receives_hash[saved_pattern].include?("all")
+      send(receives_hash[saved_pattern][:all][:method].to_sym, event) if receives_hash[saved_pattern].include?(:all)
     end
 
     def is_match?(event_path, path_listening_to)
@@ -97,7 +98,7 @@ module Donaghy
     end
 
     def method_for_action(actions, event_action)
-      meth_and_options = actions[event_action] if event_action != nil
+      meth_and_options = actions[event_action.to_sym] if event_action != nil
       if meth_and_options
         meth_and_options[:method].to_sym
       end
