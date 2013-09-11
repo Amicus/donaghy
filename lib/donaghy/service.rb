@@ -22,6 +22,17 @@ module Donaghy
         action = action.to_sym
         receives_hash[pattern] = {} unless receives_hash.include?(pattern)
         receives_hash[pattern][action] = {method: meth, options: opts}
+        cache_regexp!(pattern)
+      end
+
+      def cache_regexp!(pattern)
+        if !receives_hash[pattern][:regexp]
+          begin
+            receives_hash[pattern][:regexp] = Regexp.new(pattern)
+          rescue
+            receives_hash[pattern][:regexp] = :invalid_regexp
+          end
+        end
       end
 
       def perform_async(*args)
@@ -89,11 +100,8 @@ module Donaghy
       if File.fnmatch(path_listening_to, event_path)
         true
       else
-        begin
-          Regexp.new(path_listening_to) === event_path
-        rescue RegexpError => e
-          false
-        end
+        pattern_regexp = receives_hash[path_listening_to][:regexp]
+        pattern_regexp === event_path unless pattern_regexp == :invalid_regexp
       end
     end
 
