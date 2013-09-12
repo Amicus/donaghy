@@ -37,17 +37,17 @@ module Donaghy
       mock_queue.should_receive(:publish) do |event|
         event.path.should == "#{event_path}"
         event.payload.cool.should be_true
-        event.timer.should == 10
         event.value.should == 5
+        event.payload[:dimensions][:timer].should == 10
         event.payload[:dimensions][:organization].should == "United Wolf Lovers"
         event.payload[:dimensions][:user].should == "Jack Black"
         event.payload[:dimensions][:deprecated_path].should == "#{root_path}/base_service/#{event_path}"
         event.payload[:dimensions][:file_origin].should == "base_service"
         event.payload[:dimensions][:application_origin].should == "#{root_path}"
-        event.context.should == 'peregrine'
+        event.payload[:dimensions][:context].should == 'peregrine'
         true
       end
-    base_service.root_trigger(event_path, value: 5, timer: 10,  context: 'peregrine', payload: {cool: true,  dimensions: {organization: "United Wolf Lovers", user: "Jack Black"}})
+    base_service.root_trigger(event_path, value: 5,  payload: {cool: true,  dimensions: {timer: 10,  context: 'peregrine', organization: "United Wolf Lovers", user: "Jack Black"}})
     end
 
     it "should BaseService.subscribe_to_global_events" do
