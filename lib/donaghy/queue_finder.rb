@@ -25,11 +25,14 @@ module Donaghy
       event_paths = storage.get("donaghy_event_paths")
       if event_paths and event_paths.respond_to?(:select)
         event_paths.select do |registered_path|
-          File.fnmatch(registered_path, path)
-          begin
-            Regexp.new(registered_path) === path
-          rescue RegexpError => e
-            false
+          if File.fnmatch(registered_path, path)
+            true
+          else
+            begin
+              Regexp.new(registered_path) === path
+            rescue RegexpError => e
+              false
+            end
           end
         end
       else
