@@ -1,6 +1,5 @@
 module Donaghy
   class RemoteDistributor
-    @@debugger = 0
     include Logging
 
     def handle_distribution(evt)
@@ -10,15 +9,11 @@ module Donaghy
       end
     end
     def matching_queue_names(path)
-      if path == "heartbeats" && @@debugger = 0
-        @@debugger = 1
-        binding.pry
-      end
       queue_and_class_name = QueueFinder.new(path, Donaghy.storage).find
       names = if !queue_and_class_name.empty?
                 queue_and_class_name.map{|obj| obj[:queue]}.uniq
               else
-                logger.info("queues were empty for #{path}")
+                logger.info("no matching queues for #{path}")
                 []
               end
       names
