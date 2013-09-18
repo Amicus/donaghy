@@ -79,6 +79,7 @@ module Donaghy
 
     ### private instance api (but can't be private because internals use these)
     def distribute_event(event)
+      Donaghy.logger.info("In #{self.class.to_s} with event #{event.inspect}")
       action_of_event = event.payload.dimensions[:action] if event.payload && event.payload[:dimensions]
       event_path = event.path #add parity of method back in for backwards compatiability
 
@@ -105,11 +106,13 @@ module Donaghy
 
     def fire_all_handler(event_path, event_action, saved_pattern, event)
       if receives_hash[saved_pattern].include?(:all)
+        Donaghy.logger.info("Firing all handler for #{event_path} for #{self.class.to_s} class")
         fire_handler!(receives_hash[saved_pattern][:all][:method].to_sym, event)
       end
     end
 
     def is_match?(event_path, path_listening_to)
+      Donaghy.logger.info("seeing if #{event_path} triggered, matches with #{path_listening_to}")
       if File.fnmatch(path_listening_to, event_path)
         true
       else
