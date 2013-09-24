@@ -154,9 +154,9 @@ module Donaghy
     def add_event_origin!(path, payload, opts)
       dimensions = payload[:dimensions] || {}
       dimensions.merge!({
-          deprecated_path: event_path(path),
-          file_origin: internal_root,
-          application_origin: root_event_path
+          deprecatedPath: event_path(path),
+          fileOrigin: internal_root,
+          applicationOrigin: root_event_path
         })
       opts[:payload][:dimensions] = dimensions
     end
