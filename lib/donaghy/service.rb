@@ -114,7 +114,11 @@ module Donaghy
         true
       else
         pattern_regexp = receives_hash[path_listening_to][:regexp]
-        pattern_regexp === event_path unless pattern_regexp == :invalid_regexp
+        if pattern_regexp == :invalid_regexp
+          false
+        else
+          pattern_regexp === event_path
+        end
       end
     end
 
