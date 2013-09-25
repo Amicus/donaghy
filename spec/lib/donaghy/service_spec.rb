@@ -41,9 +41,9 @@ module Donaghy
         event.payload[:dimensions][:timer].should == 10
         event.payload[:dimensions][:organization].should == "United Wolf Lovers"
         event.payload[:dimensions][:user].should == "Jack Black"
-        event.payload[:dimensions][:deprecated_path].should == "#{root_path}/base_service/#{event_path}"
-        event.payload[:dimensions][:file_origin].should == "base_service"
-        event.payload[:dimensions][:application_origin].should == "#{root_path}"
+        event.payload[:dimensions][:deprecatedPath].should == "#{root_path}/base_service/#{event_path}"
+        event.payload[:dimensions][:fileOrigin].should == "base_service"
+        event.payload[:dimensions][:applicationOrigin].should == "#{root_path}"
         event.payload[:dimensions][:context].should == 'peregrine'
         true
       end
