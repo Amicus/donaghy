@@ -23,6 +23,8 @@ module Donaghy
         :generated_by,
         :path,
         :value,
+        :context,
+        :timer,
         :received_on,
         :retry_count,
     ]
@@ -40,6 +42,16 @@ module Donaghy
       @generated_by ||= []
       @generated_by << path unless without_append
       self
+    end
+
+    def timer=(val)
+      logger.warn("DEPRECATION WARNING attribute timer of event at top level")
+      super
+    end
+
+    def context=(val)
+      logger.warn("DEPRECATION WARNING attribute context of event at top level")
+      super
     end
 
     def payload=(val)
