@@ -19,6 +19,7 @@ module Donaghy
         :id,
         :version,
         :payload,
+        :dimensions,
         :generated_at,
         :generated_by,
         :path,
@@ -52,6 +53,11 @@ module Donaghy
     def context=(val)
       logger.warn("DEPRECATION WARNING attribute context of event at top level")
       @context = val
+    end
+
+    def dimensions=(val)
+      logger.warn("DEPRECATION WARNING attribute dimensions of event at top level")
+      @dimensions = val
     end
 
     def payload=(val)
