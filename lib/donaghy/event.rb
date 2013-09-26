@@ -46,12 +46,12 @@ module Donaghy
 
     def timer=(val)
       logger.warn("DEPRECATION WARNING attribute timer of event at top level")
-      super
+      @timer = val
     end
 
     def context=(val)
       logger.warn("DEPRECATION WARNING attribute context of event at top level")
-      super
+      @context = val
     end
 
     def payload=(val)
