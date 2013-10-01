@@ -27,7 +27,7 @@ module Donaghy
 
       describe "with a wildcard" do
         let(:results) { queue_finder.find }
-        let(:wildcard_path) { "bla*/c*" }
+        let(:wildcard_path) { "bla.*/c.*" }
 
         before do
           EventSubscriber.new.subscribe(wildcard_path, queue, class_name)
