@@ -62,6 +62,7 @@ module Donaghy
       else
         local_queues.each do |queue_and_class_name|
           class_name = queue_and_class_name[:class_name]
+          logger.info("#{uid} with path #{event.path} and is being sent to #{class_name}")
           class_name.constantize.new.distribute_event(event)
         end
       end

@@ -36,7 +36,7 @@ module Donaghy
 
     def handle_sidekiq_services
       logger.debug('subscribing to sidekiq services')
-      SidekiqRunner.receives("#{Donaghy.root_event_path}/#{Service::SIDEKIQ_EVENT_PREFIX}*", :handle_perform)
+      SidekiqRunner.receives("#{Donaghy.root_event_path}/#{Service::SIDEKIQ_EVENT_PREFIX}.*", :handle_perform)
       SidekiqRunner.subscribe_to_global_events
     end
 

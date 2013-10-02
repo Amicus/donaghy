@@ -5,6 +5,8 @@ module Donaghy
   module Service
     SIDEKIQ_EVENT_PREFIX = "donaghy/sidekiq_emulator/"
 
+    class CalledTriggerError < StandardError; end
+
     def self.included(klass)
       klass.class_attribute :donaghy_options
       klass.class_attribute :internal_root_path
@@ -15,7 +17,22 @@ module Donaghy
       ##### public Class API
 
       def receives(pattern, meth, opts = {})
-        receives_hash[pattern] = {method: meth, options: opts}
+        #nested hash of top_level_event -> actions -> handler
+        action = opts[:action] || :all
+        action = action.to_sym
+        receives_hash[pattern] = {} unless receives_hash.include?(pattern)
+        receives_hash[pattern][action] = {method: meth, options: opts}
+        cache_regexp!(pattern)
+      end
+
+      def cache_regexp!(pattern)
+        if !receives_hash[pattern][:regexp]
+          begin
+            receives_hash[pattern][:regexp] = Regexp.new(pattern)
+          rescue
+            receives_hash[pattern][:regexp] = :invalid_regexp
+          end
+        end
       end
 
       def perform_async(*args)
@@ -34,7 +51,7 @@ module Donaghy
       end
 
       def subscribe_to_global_events
-        receives_hash.each_pair do |pattern, meth_and_options|
+        receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.info "subscribing #{pattern} to #{[Donaghy.default_queue_name, self.name]}"
           EventSubscriber.new.subscribe(pattern, Donaghy.default_queue_name, self.name)
         end
@@ -42,39 +59,73 @@ module Donaghy
 
       #this is for shutting down a service for good
       def unsubscribe_all_instances
-        receives_hash.each_pair do |pattern, meth_and_options|
+        receives_hash.each_pair do |pattern, actions|
           Donaghy.logger.warn "unsubscribing all instances of #{to_s} from #{[Donaghy.default_queue_name, self.name]}"
           EventUnsubscriber.new.unsubscribe(pattern, Donaghy.default_queue_name, self.name)
         end
       end
+
     end
 
     ### Public Instance API
-    def trigger(path, opts = {})
-      logger.info "#{self.class.name} is triggering: #{event_path(path)} with #{opts.inspect}"
-      global_publish(event_path(path), opts)
-    end
-
     def root_trigger(path, opts = {})
-      logger.info "#{self.class.name} is global_root_triggering: #{path} with #{opts.inspect}"
+      logger.info "#{self.class.name} is triggering: #{path} with #{opts.inspect}"
       global_publish(path, opts)
     end
 
-    ### private instance api (but can't be private because internals use these)
+    def trigger(path, opts = {})
+      raise CalledTriggerError
+    end
 
+    ### private instance api (but can't be private because internals use these)
     def distribute_event(event)
-      receives_hash.each_pair do |pattern, meth_and_options|
-        if File.fnmatch(pattern, event.path)
-          meth = method(meth_and_options[:method].to_sym)
-          # this is in here to support path, event which is unnecessary if you're just sending events around
-          # as they have a path method
-          if meth.arity == 1
-            send(meth_and_options[:method].to_sym, event)
-          else
-            logger.warn("DEPRECATION WARNING: #{meth_and_options[:method]} on #{self.class.to_s} still takes (path, event) when it should only take (event)")
-            send(meth_and_options[:method].to_sym, event.path, event)
+      action_of_event = event.payload.dimensions[:action] if event.payload && event.payload[:dimensions]
+      event_path = event.path #add parity of method back in for backwards compatiability
+
+      receives_hash.each_pair do |saved_pattern, actions|
+        if is_match?(event_path, saved_pattern)
+          fire_all_handler(event_path, action_of_event, saved_pattern, event)
+          if method_name = method_for_action(actions, action_of_event)
+            fire_handler!(method_name, event)
           end
         end
+      end
+    end
+
+    def fire_handler!(method_name, event)
+      #this is here to support deprecated handlers of type method_name(path, event)
+      meth = method(method_name)
+      if meth.arity == 1
+        send(method_name, event)
+      else
+        logger.warn("DEPRECATION WARNING: #{method_name} on #{self.class.to_s} still takes (path, event) when it should only take (event)")
+        send(method_name, event.path, event)
+      end
+    end
+
+    def fire_all_handler(event_path, event_action, saved_pattern, event)
+      if receives_hash[saved_pattern].include?(:all)
+        fire_handler!(receives_hash[saved_pattern][:all][:method].to_sym, event)
+      end
+    end
+
+    def is_match?(event_path, path_listening_to)
+      if File.fnmatch(path_listening_to, event_path)
+        true
+      else
+        pattern_regexp = receives_hash[path_listening_to][:regexp]
+        if pattern_regexp == :invalid_regexp
+          false
+        else
+          pattern_regexp === event_path
+        end
+      end
+    end
+
+    def method_for_action(actions, event_action)
+      meth_and_options = actions[event_action.to_sym] if event_action != nil
+      if meth_and_options
+        meth_and_options[:method].to_sym
       end
     end
 
@@ -97,9 +148,32 @@ module Donaghy
     end
 
     def event_from_options(path, opts)
+      ensure_payload!(opts)
+      add_event_origin!(path, opts[:payload], opts)
       generated_by = Array(opts[:generated_by]).dup
       generated_by.unshift(path)
       Event.from_hash(opts.merge(path: path, generated_by: generated_by))
+    end
+
+    def add_event_origin!(path, payload, opts)
+      dimensions = payload[:dimensions] || {}
+      dimensions.merge!({
+          deprecatedPath: event_path(path),
+          fileOrigin: internal_root,
+          applicationOrigin: root_event_path
+        })
+      opts[:payload][:dimensions] = dimensions
+    end
+
+    def ensure_payload!(opts)
+      if !opts[:payload]
+        opts.merge!({
+          payload: {}
+          })
+      elsif !opts[:payload].kind_of?(Hash)
+        opts[:payload] = Hashie::Mash.new(:value => opts[:payload])
+      end
+
     end
 
     def event_path(path)
