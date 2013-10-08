@@ -27,11 +27,6 @@ module Donaghy
       ensure
         Donaghy.storage.remove_from_set('inprogress', event.id)
         Donaghy.storage.unset("inprogress:#{event.id}")
-        begin
-          Donaghy.storage.dec('inprogress_count')
-        rescue TypeError => type_error
-          Donaghy.logger.info("TypeError On: #{Donaghy.storage.get('inprogress_count')}")
-        end
       end
 
     end
