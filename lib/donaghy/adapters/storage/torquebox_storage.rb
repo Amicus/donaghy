@@ -73,8 +73,9 @@ module Donaghy
           @storage.increment(key, val)
         end
       rescue TypeError => e
-        Donaghy.logger.error("ERROR incing #{get(key)}")
-        raise e
+        Donaghy.logger.error("ERROR incing #{get(key)}, #{e.inspect}")
+        set(key, get(key).to_i)
+        retry
       end
 
       def dec(key, val=1)
@@ -82,8 +83,9 @@ module Donaghy
           storage.decrement(key, val)
         end
       rescue TypeError => e
-        Donaghy.logger.error("ERROR deccing #{get(key)}")
-        raise e
+        Donaghy.logger.error("ERROR decing #{get(key)}, #{e.inspect}")
+        set(key, get(key).to_i)
+        retry
       end
 
       def execute_in_transaction
