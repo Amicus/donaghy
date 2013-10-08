@@ -74,7 +74,7 @@ module Donaghy
         end
       rescue TypeError => e
         Donaghy.logger.error("ERROR incing #{get(key)}, #{e.inspect}")
-        set(key, get(key).to_i)
+        put(key, get(key).to_i)
         retry
       end
 
@@ -84,7 +84,7 @@ module Donaghy
         end
       rescue TypeError => e
         Donaghy.logger.error("ERROR decing #{get(key)}, #{e.inspect}")
-        set(key, get(key).to_i)
+        put(key, get(key).to_i)
         retry
       end
 
