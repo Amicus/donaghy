@@ -20,11 +20,11 @@ module Donaghy
 
       if done? and evt
         evt.received_on = queue
-        logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}, requeing because stopped")
+        logger.info("NEUTERED #{manager_name} fetcher received evt #{evt.to_hash.inspect}, requeing because stopped")
         evt.requeue
       else
         if evt
-          logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}")
+          logger.info("NEUTERED #{manager_name} fetcher received evt #{evt.to_hash.inspect}")
           evt.received_on = queue
           queue_and_class_names = QueueFinder.new(evt.path, Donaghy.storage).find
           logger.info("NEUTERED #{manager_name} WOULD have sent this to #{queue_and_class_names.inspect}")
