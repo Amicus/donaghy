@@ -36,17 +36,19 @@ module Donaghy
         Donaghy.middleware.execute(event, uid: uid, only_distribute: only_distribute, manager_name: manager.name) do
           if only_distribute
             if event.path.start_with?('donaghy/')
+              logger.info("EventHandler #{manager.name} handling #{event.path} locally")
               handle_locally(event)
             else
-              logger.info("#{uid} is remote distributing event")
+              logger.info("EventHandler #{manager.name} is remote distributing #{event.path}")
               RemoteDistributor.new.handle_distribution(event)
             end
           else
+            logger.info("EventHandler #{manager.name} handling #{event.path} locally")
             handle_locally(event)
           end
         end
       end
-      logger.info("#{uid} complete, acknowledging event")
+      logger.info("EventHandler #{manager.name} completed #{event.path}, acknowledging event")
       beater.terminate if beater.alive?
       event.acknowledge
       manager.async.event_handler_finished(current_actor)
