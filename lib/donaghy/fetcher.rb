@@ -26,8 +26,8 @@ module Donaghy
         if evt
           logger.info("NEUTERED #{manager_name} fetcher received evt #{evt.to_hash.inspect}")
           evt.received_on = queue
-          queue_and_class_names = QueueFinder.new(evt.path, Donaghy.storage).find
-          logger.info("NEUTERED #{manager_name} WOULD have sent #{evt.path} to #{queue_and_class_names.inspect}")
+          queue_names = RemoteDistributor.new.matching_queue_names(evt.path)
+          logger.info("NEUTERED #{manager_name} WOULD have sent #{evt.path} to #{queue_names.inspect}")
           evt.requeue
           #manager.async.handle_event(evt)
           after(2) { fetch }
