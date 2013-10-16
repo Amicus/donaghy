@@ -26,7 +26,11 @@ module Donaghy
         if evt
           logger.info("#{manager_name} fetcher received evt #{evt.to_hash.inspect}")
           evt.received_on = queue
-          manager.async.handle_event(evt)
+          queue_and_class_names = QueueFinder.new(evt.path, Donaghy.storage).find
+          logger.info("NEUTERED #{manager_name} WOULD have sent this to #{queue_and_class_names.inspect}")
+          evt.requeue
+          #manager.async.handle_event(evt)
+          sleep 10
         else
           after(0) { fetch } unless done?
         end
