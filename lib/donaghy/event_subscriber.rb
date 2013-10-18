@@ -14,7 +14,7 @@ module Donaghy
     #local from code in this process
 
     def local_subscribe(event_path, queue, class_name)
-      logger.info("local registering #{event_path} to #{queue}, #{class_name}")
+      logger.info("EventSubscriber: local registering #{event_path} to #{queue}, #{class_name}")
       Donaghy.local_storage.add_to_set("donaghy_event_paths", event_path)
       Donaghy.local_storage.add_to_set("donaghy_#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
     end
@@ -38,10 +38,11 @@ module Donaghy
     end
 
     def global_subscribe_to_event(event_path, queue, class_name)
-      logger.info("global registering #{event_path} to #{queue}, #{class_name}")
+      logger.info("EventSubscriber: global registering #{event_path} to #{queue}, #{class_name}")
       Donaghy.storage.add_to_set("donaghy_queues", queue)
       Donaghy.storage.add_to_set("donaghy_event_paths", event_path)
       Donaghy.storage.add_to_set("donaghy_#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
+      logger.info("EventSubscriber: donaghy_queues: #{Donaghy.storage.get('donaghy_queues')}, donaghy_event_paths: #{Donaghy.storage.get('donaghy_event_paths')}, listeners: #{Donaghy.storage.get("donaghy_#{event_path}")}")
     end
 
   end

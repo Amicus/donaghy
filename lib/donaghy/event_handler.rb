@@ -36,17 +36,19 @@ module Donaghy
         Donaghy.middleware.execute(event, uid: uid, only_distribute: only_distribute, manager_name: manager.name) do
           if only_distribute
             if event.path.start_with?('donaghy/')
+              logger.info("EventHandler #{uid} handling #{event.id}(#{event.path}) locally")
               handle_locally(event)
             else
-              logger.info("#{uid} is remote distributing event")
+              logger.info("EventHandler #{uid} is remote distributing #{event.id}(#{event.path})")
               RemoteDistributor.new.handle_distribution(event)
             end
           else
+            logger.info("EventHandler #{uid} handling #{event.id}(#{event.path}) locally")
             handle_locally(event)
           end
         end
       end
-      logger.info("#{uid} complete, acknowledging event")
+      logger.info("EventHandler #{uid} completed #{event.id}(#{event.path}), acknowledging event")
       beater.terminate if beater.alive?
       event.acknowledge
       manager.async.event_handler_finished(current_actor)
@@ -58,11 +60,11 @@ module Donaghy
     def handle_locally(event)
       local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
       if local_queues.empty?
-        logger.warn("#{uid} received: #{event.path} but there are no local handlers")
+        logger.error("EventHandler #{uid} received: #{event.id}(#{event.path}) but there are no local handlers")
       else
         local_queues.each do |queue_and_class_name|
           class_name = queue_and_class_name[:class_name]
-          logger.info("#{uid} with path #{event.path} and is being sent to #{class_name}")
+          logger.info("EventHandler #{uid} with path #{event.id}(#{event.path}) and is being sent to #{class_name}")
           class_name.constantize.new.distribute_event(event)
         end
       end
