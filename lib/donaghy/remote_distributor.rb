@@ -4,9 +4,9 @@ module Donaghy
 
     def handle_distribution(evt)
       queues = matching_queue_names(evt.path)
-      logger.info("RemoteDistributor: queues to publish #{evt.path}: #{queues.inspect}")
+      logger.info("RemoteDistributor: queues to publish #{evt.id}(#{evt.path}): #{queues.inspect}")
       queues.each do |queue|
-        logger.info("sending #{evt.path} to #{queue}")
+        logger.info("sending #{evt.id}(#{evt.path}) to #{queue}")
         Donaghy.queue_for(queue).publish(evt)
       end
     end
