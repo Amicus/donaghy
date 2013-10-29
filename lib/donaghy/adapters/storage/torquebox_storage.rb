@@ -28,16 +28,11 @@ module Donaghy
       end
 
       def put(key, val, expires=0)
-        storage.put(key, Marshal.dump(val), expires)
+        storage.put(key, val, expires)
       end
 
       def get(key)
-        val = storage.get(key)
-        if val
-          Marshal.load(val)
-        end
-      rescue ArgumentError, TypeError
-        val
+        storage.get(key)
       end
 
       def unset(key)
@@ -69,23 +64,11 @@ module Donaghy
       end
 
       def inc(key, val=1)
-        execute_in_transaction do
-          storage.increment(key, val)
-        end
-      rescue TypeError => e
-        Donaghy.logger.error("ERROR incing #{get(key)}, #{e.inspect}")
-        storage.put(key, get(key).to_i)
-        retry
+        storage.increment(key, val)
       end
 
       def dec(key, val=1)
-        execute_in_transaction do
-          storage.decrement(key, val)
-        end
-      rescue TypeError => e
-        Donaghy.logger.error("ERROR decing #{get(key)}, #{e.inspect}")
-        storage.put(key, get(key).to_i)
-        retry
+        storage.decrement(key, val)
       end
 
       def execute_in_transaction
