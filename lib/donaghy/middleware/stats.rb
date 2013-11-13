@@ -27,6 +27,7 @@ module Donaghy
       ensure
         Donaghy.storage.remove_from_set('inprogress', event.id)
         Donaghy.storage.unset("inprogress:#{event.id}")
+        Donaghy.storage.dec('inprogress_count')
       end
 
     end
