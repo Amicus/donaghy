@@ -12,7 +12,7 @@ group :test do
   #gem 'celluloid-redis'
   gem 'aws-sdk'
   platforms :jruby do
-    gem 'torquebox-server', '~> 2.3.0'
-    gem 'torquebox-cache', '~> 2.3.0'
+    gem 'torquebox-server', '~> 3.0.0'
+    gem 'torquebox-cache', '~> 3.0.0'
   end
 end
