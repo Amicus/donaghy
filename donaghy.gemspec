@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{gem to run services on aws}
   gem.homepage      = "https://github.com/Amicus/donaghy"
 
-  gem.add_dependency "celluloid", "~>0.13.0"
+  gem.add_dependency "celluloid", "~> 0.15.0"
   gem.add_dependency "hashie"
   gem.add_dependency "configliere"
   gem.add_dependency "activesupport", ">= 3.0.0"
