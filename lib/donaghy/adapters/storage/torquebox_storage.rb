@@ -43,7 +43,8 @@ module Donaghy
         execute_in_transaction do
           current_value = get(key)
           if current_value and !(current_value.respond_to?(:uniq) or current_value.respond_to?(:push))
-            raise NotAnEnumerableError
+            unset(key)
+            raise NotAnEnumerableError, "expected an enumerable at key #{key}, but was: #{current_value.inspect}, unset #{key}"
           else
             arry = current_value || []
             arry.push(value)
