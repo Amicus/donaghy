@@ -43,8 +43,9 @@ module Donaghy
         execute_in_transaction do
           current_value = get(key)
           if current_value and !(current_value.respond_to?(:uniq) or current_value.respond_to?(:push))
+            Donaghy.logger.error "TorqueboxStorage: expected an enumerable at key #{key}, but was: #{current_value.inspect}, unset #{key}"
             unset(key)
-            raise NotAnEnumerableError, "expected an enumerable at key #{key}, but was: #{current_value.inspect}, unset #{key}"
+            current_value = []
           else
             arry = current_value || []
             arry.push(value)
