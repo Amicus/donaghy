@@ -66,10 +66,12 @@ module Donaghy
       end
 
       def inc(key, val=1)
+        put(key, get(key).to_i) if get(key).is_a?(String)
         storage.increment(key, val)
       end
 
       def dec(key, val=1)
+        put(key, get(key).to_i) if get(key).is_a?(String)
         storage.decrement(key, val)
       end
 
