@@ -13,7 +13,7 @@ module Donaghy
     def initialize(config = nil)
       @configuration = (config || Donaghy.configuration)
       @cluster_manager = Manager.new(name: "donaghy_cluster", only_distribute: true, queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
-      @local_manager = Manager.new(name: "#{configuration[:name]}", queue: Donaghy.default_queue, concurrency: configuration[:cluster_concurrency])
+      @local_manager = Manager.new(name: "#{configuration[:name]}", queue: Donaghy.default_queue, concurrency: configuration[:concurrency])
     end
 
     def start
