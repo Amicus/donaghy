@@ -10,7 +10,10 @@ concurrency: 10
 #  - :redis_queue
 #  - wait_time_seconds: 1
 #storage: :redis_storage
-storage: :in_memory
+#storage:
+#  - :mongo_storage
+#  - safe: true
+#storage: :in_memory
 message_queue: :in_memory_queue
 name: "donaghy_test"
 queue_name: "donaghy_test"
