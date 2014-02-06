@@ -6,29 +6,28 @@ module Donaghy
       describe MongoStorage do
         let(:key) { 'key' }
 
-        it "should flush" do
+        it "flushes the storage" do
           subject.put(key, true)
           subject.flush
-          subject.get(key).should be_nil
+          expect(subject.get(key)).to be_nil
         end
 
-        it "should put and get" do
+        it "puts and gets the value from put" do
           subject.put(key, true)
-          subject.get(key).should be_true
+          expect(subject.get(key)).to be_true
         end
 
-        it "should unset" do
+        it "unsets" do
           subject.put(key, true)
           subject.unset(key)
-          subject.get(key).should be_nil
+          expect(subject.get(key)).to be_nil
         end
 
-        it "should allow an expires" do
-          now = Time.now
+        it "allows an expires" do
           subject.put(key, 'test', 1)
-          subject.get(key).should == 'test'
+          expect(subject.get(key)).to eq('test')
           sleep 1.001
-          subject.get(key).should be_nil
+          expect(subject.get(key)).to be_nil
         end
 
         describe "adding and removing from set" do
@@ -36,15 +35,15 @@ module Donaghy
             subject.add_to_set(key, :a)
           end
 
-          it "should add to set" do
+          it "does not add duplicates to set" do
             subject.add_to_set('key', :a)
-            subject.get('key').should == [:a]
+            expect(subject.get('key')).to eq([:a])
           end
 
-          it "should remove from set" do
+          it "removes from set" do
             subject.add_to_set(key, :b)
             subject.remove_from_set(key, :a)
-            subject.get(key).should == [:b]
+            expect(subject.get(key)).to eq([:b])
           end
 
         end
@@ -54,14 +53,14 @@ module Donaghy
             subject.put(key, 1)
           end
 
-          it "should inc" do
+          it "incs" do
             subject.inc(key, 1)
-            subject.get(key).to_i.should == 2
+            expect(subject.get(key)).to eq(2)
           end
 
-          it "should dec" do
+          it "decs" do
             subject.dec(key)
-            subject.get(key).to_i.should == 0
+            expect(subject.get(key)).to eq(0)
           end
 
         end

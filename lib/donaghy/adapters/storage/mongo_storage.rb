@@ -36,7 +36,7 @@ module Donaghy
         end
 
         def flush
-          session.drop
+          collection.find.remove_all
         end
 
         def put(key, val, expires=nil)
@@ -91,6 +91,9 @@ module Donaghy
         end
 
         def document_for_key(key)
+          # we have to do this weird :$set here because if we do not then it assumes we
+          # are trying to upsert the document to nil (overwriting all keys). This
+          # lets it keep the document as it exists
           query_for_key(key).upsert({:$set => {}})
           query_for_key(key).one
         end
