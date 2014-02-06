@@ -99,7 +99,7 @@ module Donaghy
         end
 
         def document_expired?(document)
-          !document['expires'] or document['expires'] >= Time.now
+          document['expires'] and document['expires'] < Time.now
         end
       end
     end
