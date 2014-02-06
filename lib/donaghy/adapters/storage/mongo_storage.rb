@@ -29,9 +29,9 @@ module Donaghy
           @opts = opts
           safe = opts[:safe] == nil ? true : opts[:safe]
           @session = Moped::Session.new((opts[:hosts] || DEFAULT_HOSTS), {
-              safe: safe,
-              database: opts[:database] || DEFAULT_DATABASE,
-              consistency: opts[:consistency] || :strong
+            safe: safe,
+            database: opts[:database] || DEFAULT_DATABASE,
+            consistency: opts[:consistency] || :strong
           })
           @collection = @session[opts[:collection] || DEFAULT_COLLECTION]
         end
@@ -41,7 +41,6 @@ module Donaghy
         end
 
         def put(key, val, expires=nil)
-
           upsert_doc = { :$set => { val: val } }
           if expires
             upsert_doc[:$set].merge!(expires: Time.now + expires)
@@ -53,8 +52,8 @@ module Donaghy
 
         def get(key)
           document = document_for_key(key)
-          if document
-            document['val'] if !document['expires'] or document['expires'] >= Time.now
+          if document and !document_expired?(document)
+            document['val']
           end
         end
 
@@ -97,6 +96,10 @@ module Donaghy
           # lets it keep the document as it exists
           query_for_key(key).upsert({:$set => {}})
           query_for_key(key).one
+        end
+
+        def document_expired?(document)
+          !document['expires'] or document['expires'] >= Time.now
         end
       end
     end
