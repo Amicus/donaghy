@@ -5,7 +5,8 @@ module Donaghy
   module Storage
     class MongoStorage
 
-      delegate :flush, :put, :get, :unset, :add_to_set, :remove_from_set, :member_of?, :inc, :dec, to: :connection_pool
+      delegate :flush, :put, :get, :unset, :add_to_set,
+               :remove_from_set, :member_of?, :inc, :dec, to: :connection_pool
 
       attr_reader :connection_pool
       def initialize(opts = {})
