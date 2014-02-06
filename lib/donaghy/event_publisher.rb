@@ -17,7 +17,7 @@ module Donaghy
     end
 
     def stop
-      supervisor.terminate if supervisor.alive?
+      supervisor.terminate if alive?
     end
 
     def alive?
