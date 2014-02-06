@@ -1,6 +1,8 @@
 require 'spec_helper'
 require 'donaghy/manager'
 
+require 'active_support/core_ext/hash/keys'
+
 module Donaghy
   #this is going to end up being more of an integration test along with the cluster_node_spec
   describe Manager do
@@ -52,9 +54,9 @@ module Donaghy
       end
     end
 
-    it "should beat the configuration" do
+    it "beats the configuration" do
       #happens through the ManagerBeater spun up at manager start
-      Donaghy.storage.get(manager.beater.path_to_beat).should == Donaghy.configuration.to_hash
+      expect(Donaghy.storage.get(manager.beater.path_to_beat).stringify_keys).to eq(Donaghy.configuration.to_hash.stringify_keys)
     end
 
     it "should publish the message" do

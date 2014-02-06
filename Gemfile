@@ -9,6 +9,7 @@ group :test do
   gem 'guard-rspec'
   gem 'ci_reporter', '~> 1.7.3'
   gem 'redis', '~> 3.0.1'
+  gem 'moped'
   #gem 'celluloid-redis'
   gem 'aws-sdk'
   platforms :jruby do

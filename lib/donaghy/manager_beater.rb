@@ -3,8 +3,6 @@ module Donaghy
     include Celluloid
     include Logging
 
-    finalizer :cleanup
-
     attr_reader :name, :timeout, :timer, :stopped, :path_to_beat
     def initialize(name, timeout=10)
       @name = name
@@ -20,6 +18,11 @@ module Donaghy
       logger.info("removing #{path_to_beat} from donaghy_#{Donaghy.hostname} and unsetting")
       Donaghy.storage.remove_from_set("donaghy_#{Donaghy.hostname}", path_to_beat)
       Donaghy.storage.unset(path_to_beat)
+    end
+
+    def terminate
+      cleanup
+      super
     end
 
     # add host to the donaghy_hosts and add the individual service to the hostname
