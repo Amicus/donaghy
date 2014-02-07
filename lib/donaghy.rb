@@ -17,6 +17,15 @@ module Donaghy
     return @configuration if @configuration
     @configuration = Configuration.new
     @configuration.defaults(default_config)
+
+    @configuration.read("/mnt/configs/donaghy_resources.yml")
+    @configuration.read("config/donaghy.yml")
+
+    @configuration.defaults(queue_name: @configuration[:name]) if !@configuration[:queue_name] and @configuration[:name]
+    version_file_path = "config/version.txt"
+    if File.exists?(version_file_path)
+      @configuration["#{@configuration[:name]}_version"] = File.read(version_file_path)
+    end
     @configuration
   end
 
@@ -112,18 +121,12 @@ module Donaghy
   def self.configuration=(opts)
     CONFIG_GUARD.synchronize do
       config_file = opts[:config_file]
-      configuration.read("/mnt/configs/donaghy_resources.yml")
-      configuration.read("config/donaghy.yml")
       if config_file
         raise MissingConfigurationFile, "Config file: #{config_file} does not exist" unless File.exists?(config_file)
         configuration.read(config_file)
       end
       configuration.defaults(opts)
-      configuration.defaults(queue_name: configuration[:name]) unless configuration[:queue_name]
-      version_file_path = "config/version.txt"
-      if File.exists?(version_file_path)
-        configuration["#{configuration[:name]}_version"] = File.read(version_file_path)
-      end
+
       configuration.resolve!
       logger.info("Donaghy configuration is now: #{configuration.inspect}")
       configuration
