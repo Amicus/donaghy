@@ -159,9 +159,9 @@ module Donaghy
   end
 
   def self.default_storage
-    if defined?(TorqueBox)
-      require 'donaghy/adapters/storage/torquebox_storage'
-      :torquebox_storage
+    if defined?(Moped)
+      require 'donaghy/adapters/storage/mongo_storage'
+      :mongo_storage
     else
       begin
         require 'donaghy/adapters/storage/redis_storage'
