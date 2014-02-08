@@ -1,6 +1,8 @@
 require 'spec_helper'
 require 'donaghy/manager_beater'
 
+require 'active_support/core_ext/hash/keys'
+
 module Donaghy
 
   describe ManagerBeater do
@@ -21,9 +23,9 @@ module Donaghy
         subject.start_beating
       end
 
-      it "should set the configuration" do
+      it "sets the configuration" do
         subject.start_beating
-        storage.get(subject.path_to_beat).should == Donaghy.configuration.to_hash
+        expect(storage.get(subject.path_to_beat).stringify_keys).to eq(Donaghy.configuration.to_hash.stringify_keys)
       end
 
       it "should add the current hostname to the donaghy hosts" do

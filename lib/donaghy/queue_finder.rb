@@ -23,7 +23,7 @@ module Donaghy
     # we need to optimize this - but there ain't no event paths right now
     def matching_paths
       event_paths = storage.get("donaghy_event_paths")
-      logger.info("QueueFinder: event paths #{event_paths}")
+      logger.debug("QueueFinder: event paths #{event_paths}")
       if event_paths and event_paths.respond_to?(:select)
         event_paths.select do |registered_path|
           if File.fnmatch(registered_path, path)

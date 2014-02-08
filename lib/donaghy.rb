@@ -64,6 +64,7 @@ module Donaghy
   def self.local_storage
     return @local_storage if @local_storage
     CONFIG_GUARD.synchronize do
+      return @local_storage if @local_storage
       @local_storage = Donaghy::Storage::InMemory.new unless @local_storage
     end
     @local_storage
@@ -159,9 +160,9 @@ module Donaghy
   end
 
   def self.default_storage
-    if defined?(TorqueBox)
-      require 'donaghy/adapters/storage/torquebox_storage'
-      :torquebox_storage
+    if defined?(Moped)
+      require 'donaghy/adapters/storage/mongo_storage'
+      :mongo_storage
     else
       begin
         require 'donaghy/adapters/storage/redis_storage'
@@ -182,6 +183,8 @@ module Donaghy
 
   #this is used mostly for testing
   def self.reset
+    storage.disconnect if storage.respond_to?(:disconnect)
+    message_queue.disconnect if message_queue.respond_to?(:disconnect)
     @configuration = @storage = @local_storage = @message_queue = @logger = @event_publisher = @middleware = nil
   end
 

@@ -24,7 +24,7 @@ module Donaghy
         evt.requeue
       else
         if evt
-          logger.info("#{manager_name} fetcher received evt #{evt.id}(#{evt.path})")
+          logger.debug("#{manager_name} fetcher received evt #{evt.id}(#{evt.path})")
           evt.received_on = queue
           manager.async.handle_event(evt)
         else
