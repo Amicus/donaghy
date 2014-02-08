@@ -17,8 +17,14 @@ module Donaghy
         Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]
       end
 
+      def disconnect
+        connection_pool.terminate
+      end
+
       class MongoStorageActor
         include Celluloid
+
+        finalizer :disconnect
 
         DEFAULT_HOSTS = [ "127.0.0.1:27017" ]
         DEFAULT_DATABASE = "#{Donaghy.donaghy_env}_donaghy"
@@ -83,6 +89,10 @@ module Donaghy
 
         def dec(key, val=1)
           query_for_key(key).upsert(:$inc => { val: -1*val })
+        end
+
+        def disconnect
+          session.disconnect
         end
 
       private
