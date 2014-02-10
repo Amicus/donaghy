@@ -8,13 +8,14 @@ module Donaghy
       delegate :flush, :put, :get, :unset, :add_to_set,
                :remove_from_set, :member_of?, :inc, :dec, to: :connection_pool
 
-      attr_reader :connection_pool
+      attr_reader :connection_pool, :opts
       def initialize(opts = {})
+        @opts = opts
         @connection_pool = MongoStorageActor.pool(size: concurrency, args: [opts])
       end
 
       def concurrency
-        Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]
+        opts[:concurrency] || [50, (Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency])/2)].min
       end
 
       def disconnect
