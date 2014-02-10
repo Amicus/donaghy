@@ -15,7 +15,7 @@ module Donaghy
       end
 
       def concurrency
-        opts[:concurrency] || [50, (Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency])/2)].min
+        opts[:concurrency] || [50, (Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency])/2].min.to_i
       end
 
       def disconnect
