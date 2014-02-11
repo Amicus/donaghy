@@ -32,6 +32,7 @@ module Donaghy
             begin
               Regexp.new(registered_path) === path
             rescue RegexpError => e
+              logger.error("REGEXP error on #{registered_path}")
               false
             end
           end

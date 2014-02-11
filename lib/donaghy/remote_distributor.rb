@@ -10,8 +10,8 @@ module Donaghy
       queues = matching_queue_names(evt.path)
       logger.info("RemoteDistributor: queues to publish #{evt.id}(#{evt.path}): #{queues.inspect}")
       queues.each do |queue|
-        logger.info("sending #{evt.id}(#{evt.path}) to #{queue}")
-        Donaghy.queue_for(queue).publish(evt)
+        time_publishing = Benchmark.realtime { Donaghy.queue_for(queue).publish(evt) }
+        logger.info("REMOTE DISTRIBUTOR: publishing #{evt.id}(#{evt.path}) took: #{time_publishing}")
       end
     end
 
