@@ -15,6 +15,8 @@ class SessionActor
   end
 
   def publish(some_message = {})
+    # uncomment the below to plan around with starting with a clean
+    # pool for every publish
     #AWS.config.http_handler.pool.clean!
     TIME_QUEUE << Benchmark.realtime { @queue.publish(some_message) }
   end
@@ -41,6 +43,9 @@ end
 
 times.sum / times.length
 
+# use the below commented out benchmark to compare parallel with
+# sequential publishing
+#
 # serial_time = Benchmark.realtime do
 #   100.times do
 #     q.publish({bob: true})
