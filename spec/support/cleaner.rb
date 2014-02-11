@@ -17,8 +17,8 @@ RSpec.configure do |config|
       end
     else
       Donaghy.logger.info('root queue destroy')
-      Donaghy.root_queue.destroy if Donaghy.root_queue.exists?
-      Donaghy.default_queue.destroy if Donaghy.default_queue.exists?
+      Donaghy.message_queue.destroy_by_name(Donaghy.root_queue.name) if Donaghy.root_queue.exists?
+      Donaghy.message_queue.destroy_by_name(Donaghy.default_queue.name) if Donaghy.default_queue.exists?
     end
 
     if defined?(TestLoadedService)

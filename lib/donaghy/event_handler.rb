@@ -36,10 +36,10 @@ module Donaghy
         Donaghy.middleware.execute(event, uid: uid, only_distribute: only_distribute, manager_name: manager.name) do
           if only_distribute
             if event.path.start_with?('donaghy/')
-              logger.debug("EventHandler #{uid} handling #{event.id}(#{event.path}) locally")
+              logger.info("EventHandler #{uid} handling #{event.id}(#{event.path}) locally")
               handle_locally(event)
             else
-              logger.debug("EventHandler #{uid} is remote distributing #{event.id}(#{event.path})")
+              logger.info("EventHandler #{uid} is remote distributing #{event.id}(#{event.path})")
               RemoteDistributor.new.handle_distribution(event)
             end
           else

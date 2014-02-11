@@ -57,8 +57,22 @@ module Donaghy
       end
 
       def find_by_name(queue_name)
+        if queue_hash[queue_name]
+          queue_hash[queue_name]
+        else
+          guard.synchronize do
+            return queue_hash[queue_name] if queue_hash[queue_name]
+            queue_hash[queue_name] = ArrayQueue.new(queue_name, redis_opts: opts)
+          end
+        end
+      end
+
+      def destroy_by_name(queue_name)
         guard.synchronize do
-          queue_hash[queue_name] ||= ArrayQueue.new(queue_name, redis_opts: opts)
+          if queue = queue_hash[queue_name]
+            queue_hash.delete(queue_name)
+            queue.destroy
+          end
         end
       end
 

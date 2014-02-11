@@ -18,10 +18,12 @@ module Donaghy
       end
 
       describe "regular queue characteristics" do
-        let!(:queue) { sqs.find_by_name("testhead") }
+
+        let(:queue_name) { 'testhead' }
+        let!(:queue) { sqs.find_by_name(queue_name) }
 
         after do
-          queue.destroy
+          sqs.destroy_by_name(queue_name)
         end
 
         it "should create a queue when one does not exist" do
@@ -29,7 +31,7 @@ module Donaghy
         end
 
         it "should have a name" do
-          queue.name.should == 'testhead'
+          queue.name.should == queue_name
         end
 
       end

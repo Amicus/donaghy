@@ -70,13 +70,39 @@ module Donaghy
 
       end
 
-      attr_reader :opts
+      attr_reader :opts, :queue_hash, :guard
       def initialize(opts = {})
         @opts = opts
+        @queue_hash = {}
+        @guard = Mutex.new
       end
 
+      # the reason the below is a little weird (with basically repeated code inside of a guard)
+      # is it's about not entering the guard.synchronize unless you need to...
+      # after the queue has been cached, no threads need to regulate their access to the queue,
+      # so they can just pull it out of the hash without synchronizing
+      # in the case where the queue hasn't been cached, you need to repeat that return inside of
+      # the synchronization in case two threads have ended up at the guard.
       def find_by_name(queue_name)
-        SqsQueue.new(queue_name, sqs: sqs)
+        if queue_hash[queue_name]
+          queue_hash[queue_name]
+        else
+          guard.synchronize do
+            if queue_hash[queue_name]
+              queue_hash[queue_name]
+            else
+              queue_hash[queue_name] = SqsQueue.new(queue_name, sqs: sqs)
+            end
+          end
+        end
+      end
+
+      def destroy_by_name(queue_name)
+        guard.synchronize do
+          if queue = queue_hash.delete(queue_name)
+            queue.destroy
+          end
+        end
       end
 
     private
