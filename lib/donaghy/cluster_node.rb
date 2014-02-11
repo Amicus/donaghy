@@ -12,8 +12,8 @@ module Donaghy
     attr_reader :configuration, :cluster_manager, :local_manager
     def initialize(config = nil)
       @configuration = (config || Donaghy.configuration)
-      @cluster_manager = Manager.new(name: "donaghy_cluster", only_distribute: true, queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
-      @local_manager = Manager.new(name: "#{configuration[:name]}", queue: Donaghy.default_queue, concurrency: configuration[:concurrency])
+      @cluster_manager = Manager.new(name: "donaghy_cluster_#{configuration[:name]}", only_distribute: true, queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
+      @local_manager = Manager.new(name: configuration[:name].to_s, queue: Donaghy.default_queue, concurrency: configuration[:concurrency])
     end
 
     def start
