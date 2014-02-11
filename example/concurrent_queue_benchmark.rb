@@ -51,10 +51,3 @@ times.sum / times.length
 #     q.publish({bob: true})
 #   end
 # end
-
-
-
-
-
-
-
