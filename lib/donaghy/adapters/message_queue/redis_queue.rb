@@ -61,6 +61,11 @@ module Donaghy
         RedisListQueue.new(queue_name, redis_opts: opts)
       end
 
+      def destroy_by_name(queue_name)
+        find_by_name(queue_name).destroy
+      end
+
+
     end
   end
 end
