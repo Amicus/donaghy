@@ -99,8 +99,7 @@ module Donaghy
 
       def destroy_by_name(queue_name)
         guard.synchronize do
-          if queue = queue_hash[queue_name]
-            queue_hash.delete(queue_name)
+          if queue = queue_hash.delete(queue_name)
             queue.destroy
           end
         end
