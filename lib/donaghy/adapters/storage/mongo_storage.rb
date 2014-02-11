@@ -15,7 +15,7 @@ module Donaghy
       end
 
       def concurrency
-        Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]
+        opts[:concurrency] || (Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency])
       end
 
       def disconnect
