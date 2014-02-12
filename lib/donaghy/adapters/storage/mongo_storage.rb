@@ -60,14 +60,14 @@ module Donaghy
 
         def get(key, event=nil)
           val = nil
-          logger.info("about to fetch key #{key} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
+          Donaghy.logger.info("about to fetch key #{key} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
           mongo_get_time = Benchmark.realtime do
             document = document_for_key(key)
             if document and !document_expired?(document)
               val = document['val']
             end
           end
-          logger.info("get key #{key} for event #{event.id if event} took #{mongo_get_time} at time #{'%.6f' % Time.new.to_f}")
+          Donaghy.logger.info("get key #{key} for event #{event.id if event} took #{mongo_get_time} at time #{'%.6f' % Time.new.to_f}")
           val
         end
 
@@ -114,7 +114,7 @@ module Donaghy
           # it assumes we are trying to upsert the document to nil
           # (overwriting all keys). This lets it keep the document as it
           # exists
-          key || query_for_key(key).upsert({:$set => {}}).one
+          key || query_for_key(key).upsert({:$set => {}})
         end
 
         def document_expired?(document)
