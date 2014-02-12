@@ -18,6 +18,7 @@ module Donaghy
     def listeners_for(matched_path)
       listeners = nil
       listener_load_time = Benchmark.realtime do
+        logger.info("about to fetch listeners on donaghy_#{matched_path} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
         listeners = storage.get("donaghy_#{matched_path}").map do |serialized_listener|
           ListenerSerializer.load(serialized_listener)
         end

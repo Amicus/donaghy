@@ -58,11 +58,17 @@ module Donaghy
           query_for_key(key).upsert(upsert_doc)
         end
 
-        def get(key)
-          document = document_for_key(key)
-          if document and !document_expired?(document)
-            document['val']
+        def get(key, event=nil)
+          val = nil
+          logger.info("about to fetch key #{key} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
+          mongo_get_time = Benchmark.realtime do
+            document = document_for_key(key)
+            if document and !document_expired?(document)
+              val = document['val']
+            end
           end
+          logger.info("get key #{key} for event #{event.id if event} took #{mongo_get_time} at time #{'%.6f' % Time.new.to_f}")
+          val
         end
 
         def unset(key)
