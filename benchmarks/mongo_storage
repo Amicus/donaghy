@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'benchmark'
+
+require 'donaghy'
+require 'donaghy/adapters/storage/mongo_storage'
+
+Donaghy.configuration = {
+    storage: [:mongo_storage, {safe: true}]
+}
+
+ITERATION_COUNT = 1000
+
+Benchmark.bm(7) do |bm|
+  bm.report("get") do
+    ITERATION_COUNT.times { Donaghy.storage.get('donaghy_event_paths') }
+  end
+end
