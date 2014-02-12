@@ -28,7 +28,7 @@ module Donaghy
         storage.expire(key, expires.to_i) if expires
       end
 
-      def get(key)
+      def get(key, event=nil)
         val = storage.get(key)
         if val
           Marshal.load(val)
