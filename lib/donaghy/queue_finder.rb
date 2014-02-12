@@ -16,12 +16,14 @@ module Donaghy
     end
 
     def listeners_for(matched_path)
+      listeners = nil
       listener_load_time = Benchmark.realtime do
-        storage.get("donaghy_#{matched_path}").map do |serialized_listener|
+        listeners = storage.get("donaghy_#{matched_path}").map do |serialized_listener|
           ListenerSerializer.load(serialized_listener)
         end
       end
       logger.info("loading listeners took #{listener_load_time} on path #{matched_path} for event #{event.id unless event.nil?}")
+      listeners
     end
 
     # we need to optimize this - but there ain't no event paths right now
