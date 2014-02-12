@@ -19,7 +19,7 @@ module Donaghy
       logger.info("queue finder running for #{evt.id}(#{evt.path})")
       queue_and_class_name = nil
       queue_finder_time = Benchmark.realtime do
-        queue_and_class_name = QueueFinder.new(path, Donaghy.storage).find
+        queue_and_class_name = QueueFinder.new(path, Donaghy.storage, evt).find
       end
       logger.info("queue finder finished running for #{evt.id}(#{evt.path}) in #{queue_finder_time}")
       names = if !queue_and_class_name.empty?
