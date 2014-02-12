@@ -8,11 +8,55 @@ require 'donaghy/adapters/storage/mongo_storage'
 Donaghy.configuration = {
     storage: [:mongo_storage, {safe: true}]
 }
-
+TIME_QUEUE = Queue.new
 ITERATION_COUNT = 1000
+class SessionActor
+  include Celluloid
 
-Benchmark.bm(7) do |bm|
-  bm.report("get") do
-    ITERATION_COUNT.times { Donaghy.storage.get('donaghy_event_paths') }
+  def find_queue
+    # uncomment the below to plan around with starting with a clean
+    # pool
+    #AWS.config.http_handler.pool.clean!
+    TIME_QUEUE << Benchmark.realtime { Donaghy::QueueFinder.new("test", Donaghy.storage).find }
   end
 end
+
+def puts_time_array(times_array, label = "times_array:")
+  puts "------- #{label} ---------"
+  puts "slowest: #{times_array.last}"
+  puts "fastest: #{times_array.first}"
+  puts "average: #{times_array.inject{|sum,x| sum + x } / ITERATION_COUNT}"
+  puts "95%: #{times_array[(times_array.length * 0.95).to_i]}"
+  puts "------- #{label} ---------"
+end
+
+
+
+# Benchmark.bm(7) do |bm|
+#   bm.report("get") do
+#     ITERATION_COUNT.times { Donaghy.storage.get('donaghy_event_paths') }
+#   end
+# end
+
+def benchmark_operation
+  ITERATION_COUNT.times.map { Benchmark.realtime { yield } }.sort
+end
+
+pool = SessionActor.pool(size: 20)
+Donaghy::EventSubscriber.new.global_subscribe_to_event("*", "test", "MongoSpeedTest")
+Donaghy::EventSubscriber.new.global_subscribe_to_event("test", "test2", "MongoSpeedTest2")
+ITERATION_COUNT.times {pool.async.find_queue}
+
+queue_finder_array = benchmark_operation { Donaghy::QueueFinder.new("test", Donaghy.storage).find }
+
+serial_times_array = benchmark_operation { Donaghy.storage.get('donaghy_event_paths') }
+
+
+pool_times_array = []
+while pool_times_array.length < ITERATION_COUNT do
+  pool_times_array << TIME_QUEUE.pop
+end
+
+puts_time_array(serial_times_array, "serial time array")
+puts_time_array(queue_finder_array, "queue finder array")
+puts_time_array(pool_times_array.sort, "pool queue finder array")
