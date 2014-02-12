@@ -19,7 +19,7 @@ module Donaghy
       listeners = nil
       listener_load_time = Benchmark.realtime do
         logger.info("about to fetch listeners on donaghy_#{matched_path} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
-        listeners = storage.get("donaghy_#{matched_path}").map do |serialized_listener|
+        listeners = storage.get("donaghy_#{matched_path}", event).map do |serialized_listener|
           ListenerSerializer.load(serialized_listener)
         end
       end
@@ -31,7 +31,8 @@ module Donaghy
     def matching_paths
       event_paths = nil
       event_paths_load_time = Benchmark.realtime do
-        event_paths = storage.get("donaghy_event_paths")
+        logger.info("about to fetch donaghy event paths for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
+        event_paths = storage.get("donaghy_event_paths", event)
       end
       logger.info("loading event paths took #{event_paths_load_time} for event #{event.id unless event.nil?}")
       logger.info("QueueFinder: event paths #{event_paths}")
