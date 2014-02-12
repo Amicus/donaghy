@@ -23,7 +23,7 @@ module Donaghy
           ListenerSerializer.load(serialized_listener)
         end
       end
-      logger.info("loading listeners took #{listener_load_time} on path #{matched_path} for event #{event.id unless event.nil?}")
+      logger.info("loading listeners took #{listener_load_time} on path #{matched_path} for event #{event.id unless event.nil?} at time #{'%.6f' % Time.new.to_f")
       listeners
     end
 
@@ -34,7 +34,7 @@ module Donaghy
         logger.info("about to fetch donaghy event paths for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
         event_paths = storage.get("donaghy_event_paths", event)
       end
-      logger.info("loading event paths took #{event_paths_load_time} for event #{event.id unless event.nil?}")
+      logger.info("loading event paths took #{event_paths_load_time} for event #{event.id unless event.nil?} at time #{'%.6f' % Time.new.to_f")
       logger.info("QueueFinder: event paths #{event_paths}")
       if event_paths and event_paths.respond_to?(:select)
         event_paths.select do |registered_path|
