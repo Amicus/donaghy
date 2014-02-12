@@ -2,10 +2,11 @@ module Donaghy
   class QueueFinder
     include Logging
 
-    attr_reader :path, :storage
-    def initialize(path, storage)
+    attr_reader :path, :storage, :event
+    def initialize(path, storage, event=nil)
       @path = path
       @storage = storage
+      @event = event
     end
 
     def find
@@ -15,15 +16,22 @@ module Donaghy
     end
 
     def listeners_for(matched_path)
-      storage.get("donaghy_#{matched_path}").map do |serialized_listener|
-        ListenerSerializer.load(serialized_listener)
+      listener_load_time = Benchmark.realtime do
+        storage.get("donaghy_#{matched_path}").map do |serialized_listener|
+          ListenerSerializer.load(serialized_listener)
+        end
       end
+      logger.info("loading listeners took #{listener_load_time} on path #{matched_path} for event #{event.id unless event.nil?}")
     end
 
     # we need to optimize this - but there ain't no event paths right now
     def matching_paths
-      event_paths = storage.get("donaghy_event_paths")
-      logger.debug("QueueFinder: event paths #{event_paths}")
+      event_paths = nil
+      event_paths_load_time = Benchmark.realtime do
+        event_paths = storage.get("donaghy_event_paths")
+      end
+      logger.info("loading event paths took #{event_paths_load_time} for event #{event.id unless event.nil?}")
+      logger.info("QueueFinder: event paths #{event_paths}")
       if event_paths and event_paths.respond_to?(:select)
         event_paths.select do |registered_path|
           if File.fnmatch(registered_path, path)

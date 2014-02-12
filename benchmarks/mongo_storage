@@ -4,7 +4,7 @@ require 'benchmark'
 
 require 'donaghy'
 require 'donaghy/adapters/storage/mongo_storage'
-
+require 'hashie/mash'
 Donaghy.configuration = {
     storage: [:mongo_storage, {safe: true}]
 }
@@ -13,11 +13,12 @@ ITERATION_COUNT = 1000
 class SessionActor
   include Celluloid
 
-  def find_queue
+  def find_queue(i)
     # uncomment the below to plan around with starting with a clean
     # pool
     #AWS.config.http_handler.pool.clean!
-    TIME_QUEUE << Benchmark.realtime { Donaghy::QueueFinder.new("test", Donaghy.storage).find }
+    evt = Hashie::Mash.new({id: i})
+    TIME_QUEUE << Benchmark.realtime { Donaghy::QueueFinder.new("test", Donaghy.storage, evt).find }
   end
 end
 
@@ -45,11 +46,11 @@ end
 pool = SessionActor.pool(size: 20)
 Donaghy::EventSubscriber.new.global_subscribe_to_event("*", "test", "MongoSpeedTest")
 Donaghy::EventSubscriber.new.global_subscribe_to_event("test", "test2", "MongoSpeedTest2")
-ITERATION_COUNT.times {pool.async.find_queue}
+ITERATION_COUNT.times {|i| pool.async.find_queue(i)}
 
-queue_finder_array = benchmark_operation { Donaghy::QueueFinder.new("test", Donaghy.storage).find }
+# queue_finder_array = benchmark_operation { Donaghy::QueueFinder.new("test", Donaghy.storage).find }
 
-serial_times_array = benchmark_operation { Donaghy.storage.get('donaghy_event_paths') }
+# serial_times_array = benchmark_operation { Donaghy.storage.get('donaghy_event_paths') }
 
 
 pool_times_array = []
