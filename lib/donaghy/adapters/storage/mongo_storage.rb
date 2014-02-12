@@ -6,7 +6,8 @@ module Donaghy
     class MongoStorage
 
       delegate :flush, :put, :get, :unset, :add_to_set,
-               :remove_from_set, :member_of?, :inc, :dec, to: :connection_pool
+               :remove_from_set, :member_of?, :inc, :dec,
+        to: :connection_pool
 
       attr_reader :connection_pool, :pool_size
       def initialize(opts = {})
@@ -102,11 +103,12 @@ module Donaghy
         end
 
         def document_for_key(key)
-          # we have to do this weird :$set here because if we do not then it assumes we
-          # are trying to upsert the document to nil (overwriting all keys). This
-          # lets it keep the document as it exists
-          query_for_key(key).upsert({:$set => {}})
-          query_for_key(key).one
+          key = query_for_key(key).one
+          # we have to do this weird :$set here because if we do not then
+          # it assumes we are trying to upsert the document to nil
+          # (overwriting all keys). This lets it keep the document as it
+          # exists
+          key || query_for_key(key).upsert({:$set => {}}).one
         end
 
         def document_expired?(document)
