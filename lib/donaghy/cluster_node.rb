@@ -103,7 +103,9 @@ module Donaghy
     end
 
     def update_local_events
-      listener_updater_supervisor.actors.first.update_local_event_paths
+      if listener_updater_supervisor.alive?
+        listener_updater_supervisor.actors.first.update_local_event_paths
+      end
     end
 
   end
