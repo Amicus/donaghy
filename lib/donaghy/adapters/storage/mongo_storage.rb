@@ -60,14 +60,12 @@ module Donaghy
 
         def get(key, event=nil)
           val = nil
-          Donaghy.logger.info("about to fetch key #{key} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
           mongo_get_time = Benchmark.realtime do
             document = document_for_key(key)
             if document and !document_expired?(document)
               val = document['val']
             end
           end
-          Donaghy.logger.info("get key #{key} for event #{event.id if event} took #{mongo_get_time} at time #{'%.6f' % Time.new.to_f}")
           val
         end
 
