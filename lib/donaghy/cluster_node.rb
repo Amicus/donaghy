@@ -1,6 +1,7 @@
 require 'celluloid/autostart'
 require "donaghy/sidekiq_runner"
 require "donaghy/manager"
+require 'donaghy/listener_updater'
 
 module Donaghy
   class ClusterNode
@@ -9,11 +10,12 @@ module Donaghy
 
     trap_exit :manager_died
 
-    attr_reader :configuration, :cluster_manager, :local_manager
+    attr_reader :configuration, :cluster_manager, :local_manager, :listener_updater
     def initialize(config = nil)
       @configuration = (config || Donaghy.configuration)
       @cluster_manager = Manager.new(name: "donaghy_cluster_#{configuration[:name]}", only_distribute: true, queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
       @local_manager = Manager.new(name: configuration[:name].to_s, queue: Donaghy.default_queue, concurrency: configuration[:concurrency])
+      @listener_updater = ListenerUpdater.new(remote: Donaghy.storage, local: Donaghy.local_storage)
     end
 
     def start
@@ -25,6 +27,7 @@ module Donaghy
           @local_manager.future.start
       ]
       futures.each(&:value)
+      listener_updater.continuously_update_local_event_paths(20)
       logger.debug("cluster node started both cluster and local managers")
       signal(:started)
     end
@@ -73,6 +76,7 @@ module Donaghy
 
     def stop(seconds = 0)
       logger.info('stopping cluster node')
+      listener_updater.terminate if listener_updater.alive?
       signal(:stop_requested)
       futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
         manager.future.stop(seconds)

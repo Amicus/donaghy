@@ -20,7 +20,7 @@ module Donaghy
       end
 
       def default_pool_size
-        Celluloid.cores * 2 #Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]
+        [50, Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]].min
       end
 
       class MongoStorageActor

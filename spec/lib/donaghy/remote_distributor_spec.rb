@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'donaghy/listener_updater'
 
 module Donaghy
 
@@ -7,12 +8,18 @@ module Donaghy
     let(:queue) { "testQueue" }
     let(:class_name) { "KlassHandler" }
     let(:event) { Event.new(path: event_path, payload: true)}
-    let(:queue_finder) { QueueFinder.new(event_path)}
     let(:mock_queue) { mock(:message_queue, publish: true)}
+
+    let(:listener_updater) { ListenerUpdater.new(local: Donaghy.local_storage, remote: Donaghy.storage) }
+
+    after do
+      listener_updater.terminate if listener_updater.alive?
+    end
 
     describe "with a single listener" do
       before do
         EventSubscriber.new.global_subscribe_to_event(event_path, queue, class_name)
+        listener_updater.update_local_event_paths
       end
 
       it "should distribute work" do
@@ -40,6 +47,7 @@ module Donaghy
         end
         EventSubscriber.new.global_subscribe_to_event(event_path, queue, "ListenerOne")
         EventSubscriber.new.global_subscribe_to_event(event_path, queue, "ListenerTwo")
+        listener_updater.update_local_event_paths
       end
 
       it "should only send one message from the global queue to the cluster queue" do
