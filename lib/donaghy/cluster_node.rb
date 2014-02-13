@@ -12,8 +12,10 @@ module Donaghy
 
     UPDATE_LOCAL_LISTENERS_EVERY = 20
 
-    attr_reader :configuration, :cluster_manager, :local_manager, :listener_updater_supervisor
+    attr_reader :configuration, :cluster_manager, :local_manager,
+                :listener_updater_supervisor
     def initialize(config = nil)
+      @stop_requested = false
       @configuration = (config || Donaghy.configuration)
       @cluster_manager = Manager.new(name: "donaghy_cluster_#{configuration[:name]}", only_distribute: true, queue: Donaghy.root_queue, concurrency: configuration[:cluster_concurrency])
       @local_manager = Manager.new(name: configuration[:name].to_s, queue: Donaghy.default_queue, concurrency: configuration[:concurrency])
@@ -22,6 +24,7 @@ module Donaghy
 
     def start
       logger.debug('cluster node starting up')
+      @stop_requested = false
       load_classes_and_subscribe_to_events
       logger.debug("starting cluster manager and local manager on #{Donaghy.default_queue.name}")
       futures = [
@@ -81,6 +84,7 @@ module Donaghy
 
     def stop(seconds = 0)
       logger.info('stopping cluster node')
+      @stop_requested = true
       listener_updater_supervisor.terminate if listener_updater_supervisor.alive?
       signal(:stop_requested)
       futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
@@ -103,7 +107,7 @@ module Donaghy
     end
 
     def update_local_events
-      if listener_updater_supervisor.alive?
+      if listener_updater_supervisor.alive? and !@stop_requested
         listener_updater_supervisor.actors.first.update_local_event_paths
       end
     end
