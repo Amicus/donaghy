@@ -50,7 +50,7 @@ module Donaghy
       it "should receive them even if not subscribed" do
         Timeout.timeout(5) do
           #binding.pry
-          until Donaghy.storage.member_of?('donaghy_event_paths', 'donaghy_test/donaghy/sidekiq_emulator/.*')
+          until Donaghy.local_storage.member_of?(LOCAL_DONAGHY_EVENT_PATHS, 'donaghy_test/donaghy/sidekiq_emulator/.*')
             sleep 0.1
           end
         end

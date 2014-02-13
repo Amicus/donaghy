@@ -21,15 +21,18 @@ module Donaghy
       })
     end
 
+    let(:remote_storage) { Donaghy.storage }
+    let(:local_storage) { Donaghy.local_storage }
+
     describe "when receiving an event" do
       it "should remove from remote storage" do
         serialized_event_data = ListenerSerializer.dump(queue: queue, class_name: class_name)
 
-        subscribe_event_worker.global_subscribe_to_event(event_path, queue, class_name)
-        is_member?(Donaghy.storage, event_path, serialized_event_data).should be_true
+        subscribe_event_worker.global_subscribe(event_path, queue, class_name)
+        remote_storage.member_of?("#{PATH_PREFIX}#{event_path}", serialized_event_data).should be_true
 
         subject.handle_unsubscribe(unsubscribe_event)
-        is_member?(Donaghy.storage, event_path, serialized_event_data).should be_false
+        remote_storage.member_of?("#{PATH_PREFIX}#{event_path}", serialized_event_data).should be_false
       end
     end
 
@@ -38,19 +41,12 @@ module Donaghy
         serialized_event_data = ListenerSerializer.dump(queue: queue, class_name: class_name)
 
         subscribe_event_worker.subscribe(event_path, queue, class_name)
-        is_member?(Donaghy.local_storage, event_path, serialized_event_data).should be_true
+        local_storage.member_of?("#{LOCAL_PATH_PREFIX}#{event_path}", serialized_event_data).should be_true
 
         subject.unsubscribe(event_path, queue, class_name)
-        is_member?(Donaghy.local_storage, event_path, serialized_event_data).should be_false
+        local_storage.member_of?("#{LOCAL_PATH_PREFIX}#{event_path}", serialized_event_data).should be_false
       end
     end
-
-    def is_member?(storage, event_path, serialized_event_data)
-      storage.member_of?("donaghy_#{event_path}", serialized_event_data)
-    end
-
-
-
   end
 
 end

@@ -7,6 +7,12 @@ module Donaghy
   ROOT_QUEUE = "global_event"
   CONFIG_GUARD = Monitor.new
 
+  DONAGHY_QUEUES_PATH = 'donaghy_queues'
+  DONAGHY_EVENT_PATHS = 'donaghy_events'
+  PATH_PREFIX = 'donaghy_'
+  LOCAL_DONAGHY_EVENT_PATHS = 'local_donaghy_events'
+  LOCAL_PATH_PREFIX = 'donaghy_local_'
+
   class MissingConfigurationFile < StandardError; end
 
   def self.donaghy_env

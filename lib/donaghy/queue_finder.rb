@@ -1,11 +1,15 @@
+require 'active_support/core_ext/module/delegation'
+
+
 module Donaghy
   class QueueFinder
     include Logging
 
-    attr_reader :path, :storage
-    def initialize(path, storage)
-      @path = path
+    attr_reader :event_path, :storage, :local
+    def initialize(event_path, storage, opts = {})
+      @event_path = event_path
       @storage = storage
+      @local = opts[:local]
     end
 
     def find
@@ -15,31 +19,39 @@ module Donaghy
     end
 
     def listeners_for(matched_path)
-      storage.get("donaghy_#{matched_path}").map do |serialized_listener|
+      storage.get(storage_path_from_path(matched_path)).map do |serialized_listener|
         ListenerSerializer.load(serialized_listener)
       end
     end
 
-    # we need to optimize this - but there ain't no event paths right now
     def matching_paths
-      event_paths = storage.get("donaghy_event_paths")
-      logger.debug("QueueFinder: event paths #{event_paths}")
-      if event_paths and event_paths.respond_to?(:select)
-        event_paths.select do |registered_path|
-          if File.fnmatch(registered_path, path)
-            true
-          else
-            begin
-              Regexp.new(registered_path) === path
-            rescue RegexpError => e
-              logger.error("REGEXP error on #{registered_path}")
-              false
-            end
-          end
-        end
+      Array(storage.get(event_paths_path)).select { |registered_path| path_matches?(registered_path) }
+    end
+
+  private
+    def path_matches?(registered_path)
+      if File.fnmatch(registered_path, event_path)
+        true
       else
-        []
+        begin
+          Regexp.new(registered_path) === event_path
+        rescue RegexpError => e
+          logger.error("REGEXP error on '#{registered_path}', #{e.inspect}")
+          false
+        end
       end
+    end
+
+    def local?
+      @local
+    end
+
+    def event_paths_path
+      local? ? LOCAL_DONAGHY_EVENT_PATHS : DONAGHY_EVENT_PATHS
+    end
+
+    def storage_path_from_path(path)
+      local? ? "#{LOCAL_PATH_PREFIX}#{path}" : "#{PATH_PREFIX}#{path}"
     end
 
   end
