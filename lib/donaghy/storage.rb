@@ -10,7 +10,7 @@ module Donaghy
       def put(key, val, expires=nil)
       end
 
-      def get(key, event=nil)
+      def get(key)
       end
 
       def add_to_set(key, value)
