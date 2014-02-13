@@ -12,17 +12,12 @@ module Donaghy
     end
 
     def update_local_event_paths
-      event_paths = remote_storage.get('donaghy_event_paths')
-      Array(event_paths).each do |event_path|
-        local_storage.put("donaghy_remote#{event_path}", remote_storage.get("donaghy_#{event_path}"))
+      event_paths = Array(remote_storage.get(DONAGHY_EVENT_PATHS))
+
+      event_paths.each do |event_path|
+        local_storage.put("#{PATH_PREFIX}#{event_path}", remote_storage.get("#{PATH_PREFIX}#{event_path}"))
       end
-      local_storage.put('donaghy_remoteevent_paths', event_paths)
+      local_storage.put(DONAGHY_EVENT_PATHS, event_paths)
     end
-
-    def continuously_update_local_event_paths(interval)
-      #update_local_event_paths
-      every(interval) { update_local_event_paths }
-    end
-
   end
 end

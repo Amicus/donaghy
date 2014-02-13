@@ -5,13 +5,11 @@ module Donaghy
   class QueueFinder
     include Logging
 
-    CACHE_UPDATE_INTERVAL = 30 #seconds
-
-    attr_reader :path, :storage, :event, :guard, :prefix
-    def initialize(path, storage, prefix=nil)
-      @path = path
+    attr_reader :event_path, :storage, :local
+    def initialize(event_path, storage, opts = {})
+      @event_path = event_path
       @storage = storage
-      @prefix = prefix
+      @local = opts[:local]
     end
 
     def find
@@ -21,42 +19,39 @@ module Donaghy
     end
 
     def listeners_for(matched_path)
-      listeners = nil
-      listener_load_time = Benchmark.realtime do
-        logger.info("about to fetch listeners on donaghy_#{matched_path} for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
-        listeners = storage.get("donaghy_#{prefix}#{matched_path}", event).map do |serialized_listener|
-          ListenerSerializer.load(serialized_listener)
-        end
+      storage.get(storage_path_from_path(matched_path)).map do |serialized_listener|
+        ListenerSerializer.load(serialized_listener)
       end
-      logger.info("loading listeners took #{listener_load_time} on path #{matched_path} for event #{event.id unless event.nil?} at time #{'%.6f' % Time.new.to_f}")
-      listeners
     end
 
-    # we need to optimize this - but there ain't no event paths right now
     def matching_paths
-      event_paths = nil
-      event_paths_load_time = Benchmark.realtime do
-        logger.info("about to fetch donaghy event paths for event #{event.id if event} at time #{'%.6f' % Time.new.to_f}")
-        event_paths = storage.get("donaghy_#{prefix}event_paths", event)
-      end
-      logger.info("loading event paths took #{event_paths_load_time} for event #{event.id unless event.nil?} at time #{'%.6f' % Time.new.to_f}")
-      logger.info("QueueFinder: event paths #{event_paths}")
-      if event_paths and event_paths.respond_to?(:select)
-        event_paths.select do |registered_path|
-          if File.fnmatch(registered_path, path)
-            true
-          else
-            begin
-              Regexp.new(registered_path) === path
-            rescue RegexpError => e
-              logger.error("REGEXP error on #{registered_path}")
-              false
-            end
-          end
-        end
+      Array(storage.get(event_paths_path)).select { |registered_path| path_matches?(registered_path) }
+    end
+
+  private
+    def path_matches?(registered_path)
+      if File.fnmatch(registered_path, event_path)
+        true
       else
-        []
+        begin
+          Regexp.new(registered_path) === event_path
+        rescue RegexpError => e
+          logger.error("REGEXP error on '#{registered_path}', #{e.inspect}")
+          false
+        end
       end
+    end
+
+    def local?
+      @local
+    end
+
+    def event_paths_path
+      local? ? LOCAL_DONAGHY_EVENT_PATHS : DONAGHY_EVENT_PATHS
+    end
+
+    def storage_path_from_path(path)
+      local? ? "#{LOCAL_PATH_PREFIX}#{path}" : "#{PATH_PREFIX}#{path}"
     end
 
   end

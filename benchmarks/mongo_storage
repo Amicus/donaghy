@@ -31,21 +31,13 @@ def puts_time_array(times_array, label = "times_array:")
   puts "------- #{label} ---------"
 end
 
-
-
-# Benchmark.bm(7) do |bm|
-#   bm.report("get") do
-#     ITERATION_COUNT.times { Donaghy.storage.get('donaghy_event_paths') }
-#   end
-# end
-
 def benchmark_operation
   ITERATION_COUNT.times.map { Benchmark.realtime { yield } }.sort
 end
 
 pool = SessionActor.pool(size: 20)
-Donaghy::EventSubscriber.new.global_subscribe_to_event("*", "test", "MongoSpeedTest")
-Donaghy::EventSubscriber.new.global_subscribe_to_event("test", "test2", "MongoSpeedTest2")
+Donaghy::EventSubscriber.new.global_subscribe("*", "test", "MongoSpeedTest")
+Donaghy::EventSubscriber.new.global_subscribe("test", "test2", "MongoSpeedTest2")
 ITERATION_COUNT.times {|i| pool.async.find_queue(i)}
 
 # queue_finder_array = benchmark_operation { Donaghy::QueueFinder.new("test", Donaghy.storage).find }

@@ -18,7 +18,7 @@ module Donaghy
 
     describe "with a single listener" do
       before do
-        EventSubscriber.new.global_subscribe_to_event(event_path, queue, class_name)
+        EventSubscriber.new.global_subscribe(event_path, queue, class_name)
         listener_updater.update_local_event_paths
       end
 
@@ -45,8 +45,8 @@ module Donaghy
           include Donaghy::Service
           receives "blah/cool", :handle_shared
         end
-        EventSubscriber.new.global_subscribe_to_event(event_path, queue, "ListenerOne")
-        EventSubscriber.new.global_subscribe_to_event(event_path, queue, "ListenerTwo")
+        EventSubscriber.new.global_subscribe(event_path, queue, "ListenerOne")
+        EventSubscriber.new.global_subscribe(event_path, queue, "ListenerTwo")
         listener_updater.update_local_event_paths
       end
 
