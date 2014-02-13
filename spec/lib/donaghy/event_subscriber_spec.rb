@@ -18,36 +18,48 @@ module Donaghy
       })
     end
 
-    describe "when just subscribing" do
+    let(:mock_queue) { double(:queue, publish: true) }
 
-      it "should store the subscription locally and fire an event" do
-        mock_queue = mock(:queue, publish: true)
-        Donaghy.stub(:root_queue).and_return(mock_queue)
-        mock_queue.should_receive(:publish).with(an_instance_of(Event))
-        EventSubscriber.new.subscribe(event_path, queue, class_name)
-        assert_has_subscription(Donaghy.local_storage, event_path, serialized_event_data)
-      end
+    let(:local_storage) { Donaghy.local_storage }
+    let(:remote_storage) { Donaghy.storage }
 
+    before do
+      Donaghy.stub(:root_queue).and_return(mock_queue)
     end
 
-    describe "when receiving a remote event to handle a subscription" do
+    describe "#subscribe" do
+
+      before do
+        # it publishes the event
+        mock_queue.should_receive(:publish).with(an_instance_of(Event))
+        EventSubscriber.new.subscribe(event_path, queue, class_name)
+      end
+
+      it "stores the subscription locally" do
+        expect(local_storage.member_of?(LOCAL_DONAGHY_EVENT_PATHS, event_path)).to be_true
+        expect(local_storage.member_of?("#{LOCAL_PATH_PREFIX}#{event_path}", serialized_event_data)).to be_true
+      end
+    end
+
+
+    describe "handling event to subscribe a path" do
       before do
         event_worker.handle_subscribe(subscription_event)
       end
 
-      it "should save serialized event data to storage set" do
-        assert_has_subscription(Donaghy.storage, event_path, serialized_event_data)
+      it "subscribes on remote storage" do
+        expect(remote_storage.member_of?(DONAGHY_EVENT_PATHS, event_path)).to be_true
+        expect(remote_storage.member_of?("#{PATH_PREFIX}#{event_path}", serialized_event_data)).to be_true
       end
 
-      it "should add the queue list to the donaghy_queues" do
-        Donaghy.storage.member_of?("donaghy_queues", queue).should be_true
+      it "adds the queue list to the donaghy_queues" do
+        remote_storage.member_of?(DONAGHY_QUEUES_PATH, queue).should be_true
       end
-    end
 
-    def assert_has_subscription(storage, path, data)
-      storage.member_of?("donaghy_#{path}", data).should be_true
-      storage.member_of?("donaghy_event_paths", path).should be_true
-    end
+      it "updates the local cache of the remote storage" do
+        expect(local_storage.member_of?(DONAGHY_EVENT_PATHS, event_path)).to be_true
+      end
 
+    end
   end
 end

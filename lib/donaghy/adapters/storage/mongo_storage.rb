@@ -6,7 +6,8 @@ module Donaghy
     class MongoStorage
 
       delegate :flush, :put, :get, :unset, :add_to_set,
-               :remove_from_set, :member_of?, :inc, :dec, to: :connection_pool
+               :remove_from_set, :member_of?, :inc, :dec,
+        to: :connection_pool
 
       attr_reader :connection_pool, :pool_size
       def initialize(opts = {})
@@ -18,8 +19,12 @@ module Donaghy
         connection_pool.terminate
       end
 
+      # in an investigation concluding 2/13/2014 we found that a very high number of actors
+      # in the pool here resulted in a very high wait time for an actor. Seems to be related
+      # to the number of cores in your system as we could replicate thrashing (slowdown) on staging
+      # with 20 concurrent threads (2 cores) and on a macbook pro (8 cores) with 80 threads
       def default_pool_size
-        Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]
+        [Celluloid.cores * 4, Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]].min
       end
 
       class MongoStorageActor
@@ -102,11 +107,12 @@ module Donaghy
         end
 
         def document_for_key(key)
-          # we have to do this weird :$set here because if we do not then it assumes we
-          # are trying to upsert the document to nil (overwriting all keys). This
-          # lets it keep the document as it exists
-          query_for_key(key).upsert({:$set => {}})
-          query_for_key(key).one
+          key = query_for_key(key).one
+          # we have to do this weird :$set here because if we do not then
+          # it assumes we are trying to upsert the document to nil
+          # (overwriting all keys). This lets it keep the document as it
+          # exists
+          key || query_for_key(key).upsert({:$set => {}})
         end
 
         def document_expired?(document)

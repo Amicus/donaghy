@@ -10,7 +10,7 @@ concurrency: 10
 #  - :redis_queue
 #  - wait_time_seconds: 1
 #storage: :redis_storage
-#storage:
+# storage:
 #  - :mongo_storage
 #  - safe: true
 #storage: :in_memory

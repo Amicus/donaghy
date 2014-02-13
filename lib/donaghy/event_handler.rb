@@ -58,7 +58,7 @@ module Donaghy
     end
 
     def handle_locally(event)
-      local_queues = QueueFinder.new(event.path, Donaghy.local_storage).find
+      local_queues = QueueFinder.new(event.path, Donaghy.local_storage, local: true).find
       if local_queues.empty?
         logger.error("EventHandler #{uid} received: #{event.id}(#{event.path}) but there are no local handlers")
       else

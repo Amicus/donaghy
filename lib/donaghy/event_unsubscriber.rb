@@ -12,8 +12,8 @@ module Donaghy
 
     def local_unsubscribe(event_path, queue, class_name)
       logger.info("local unsubscribing #{event_path} from #{queue} and #{class_name}")
-      Donaghy.local_storage.remove_from_set("donaghy_#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
-      Donaghy.local_storage.remove_from_set("donaghy_event_paths", event_path)
+      local_storage.remove_from_set("#{LOCAL_PATH_PREFIX}#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
+      local_storage.remove_from_set(LOCAL_DONAGHY_EVENT_PATHS, event_path)
     end
 
     def global_unsubscribe(event_path, queue, class_name)
@@ -32,8 +32,17 @@ module Donaghy
       event_path, queue, class_name = payload.event_path, payload.queue, payload.class_name
       logger.info("globally unsubscribing #{event_path} from #{queue}, #{class_name}")
       logger.warn("UNSUBSCRING #{event_path} from #{queue}, #{class_name}")
-      Donaghy.storage.remove_from_set("donaghy_#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
-      Donaghy.storage.remove_from_set("donaghy_event_paths", event_path)
+      remote_storage.remove_from_set("#{PATH_PREFIX}#{event_path}", ListenerSerializer.dump({queue: queue, class_name: class_name}))
+      remote_storage.remove_from_set(DONAGHY_EVENT_PATHS, event_path)
+    end
+
+  private
+    def local_storage
+      Donaghy.local_storage
+    end
+
+    def remote_storage
+      Donaghy.storage
     end
 
   end
