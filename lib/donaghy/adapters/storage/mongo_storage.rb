@@ -19,6 +19,10 @@ module Donaghy
         connection_pool.terminate
       end
 
+      # in an investigation concluding 2/13/2014 we found that a very high number of actors
+      # in the pool here resulted in a very high wait time for an actor. Seems to be related
+      # to the number of cores in your system as we could replicate thrashing (slowdown) on staging
+      # with 20 concurrent threads (2 cores) and on a macbook pro (8 cores) with 80 threads
       def default_pool_size
         [Celluloid.cores * 4, Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]].min
       end
