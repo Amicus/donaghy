@@ -34,7 +34,7 @@ module Donaghy
         storage_hash[key] = entry
       end
 
-      def get(key, event=nil)
+      def get(key)
         entry = storage_hash[key]
         if entry and (!entry.expires || entry.expires > Time.now)
           entry.value

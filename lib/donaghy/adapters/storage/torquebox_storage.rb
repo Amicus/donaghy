@@ -31,7 +31,7 @@ module Donaghy
         storage.put(key, val, expires)
       end
 
-      def get(key, event=nil)
+      def get(key)
         storage.get(key)
       end
 
