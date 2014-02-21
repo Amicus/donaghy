@@ -56,7 +56,7 @@ module Donaghy
 
     it "beats the configuration" do
       #happens through the ManagerBeater spun up at manager start
-      expect(Donaghy.storage.get(manager.beater.path_to_beat).stringify_keys).to eq(Donaghy.configuration.to_hash.stringify_keys)
+      expect(Donaghy.storage.get(manager.beater.path_to_beat).to_json).to eq(Donaghy.configuration.to_hash.to_json)
     end
 
     it "should publish the message" do
