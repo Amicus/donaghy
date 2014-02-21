@@ -12,8 +12,8 @@ require 'donaghy/adapters/message_queue/in_memory_queue'
 #require 'donaghy/adapters/storage/redis_storage'
 #require 'donaghy/adapters/message_queue/redis_queue'
 
-#require 'moped'
-#require 'donaghy/adapters/storage/mongo_storage'
+require 'moped'
+require 'donaghy/adapters/storage/mongo_storage'
 
 Dir["spec/support/**/*.rb"].each {|f| require File.expand_path(f)}
 

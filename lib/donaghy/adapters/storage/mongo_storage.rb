@@ -1,22 +1,31 @@
+require "connection_pool"
 require 'moped'
-require 'active_support/core_ext/module/delegation'
 
 module Donaghy
   module Storage
     class MongoStorage
 
-      delegate :flush, :put, :get, :unset, :add_to_set,
-               :remove_from_set, :member_of?, :inc, :dec,
-        to: :connection_pool
-
       attr_reader :connection_pool, :pool_size
       def initialize(opts = {})
         @pool_size = opts[:pool_size] || default_pool_size
-        @connection_pool = MongoStorageActor.pool(size: pool_size, args: [opts])
+        @connection_pool = ConnectionPool.new(:size => pool_size, :timeout => 5){ MongoStorageActor.new(opts) }
       end
 
       def disconnect
-        connection_pool.terminate
+        connection_pool.shutdown do |mongo_storage_actor|
+          mongo_storage_actor.disconnect
+        end
+      end
+
+      [:flush, :put, :get, :unset, :add_to_set,
+          :remove_from_set, :member_of?, :inc, :dec].each do |method_name|
+
+        define_method(method_name) do |*args|
+          connection_pool.with do |mongo_storage_actor|
+            mongo_storage_actor.public_send(method_name, *args)
+          end
+        end
+
       end
 
       # in an investigation concluding 2/13/2014 we found that a very high number of actors
@@ -24,13 +33,10 @@ module Donaghy
       # to the number of cores in your system as we could replicate thrashing (slowdown) on staging
       # with 20 concurrent threads (2 cores) and on a macbook pro (8 cores) with 80 threads
       def default_pool_size
-        [Celluloid.cores * 4, Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]].min
+        Donaghy.configuration[:concurrency] + Donaghy.configuration[:cluster_concurrency]
       end
 
       class MongoStorageActor
-        include Celluloid
-
-        finalizer :disconnect
 
         DEFAULT_HOSTS = [ "127.0.0.1:27017" ]
         DEFAULT_DATABASE = "#{Donaghy.donaghy_env}_donaghy"

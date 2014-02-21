@@ -25,7 +25,7 @@ module Donaghy
 
       it "sets the configuration" do
         subject.start_beating
-        expect(storage.get(subject.path_to_beat).stringify_keys).to eq(Donaghy.configuration.to_hash.stringify_keys)
+        expect(storage.get(subject.path_to_beat).to_json).to eq(Donaghy.configuration.to_hash.to_json)
       end
 
       it "should add the current hostname to the donaghy hosts" do

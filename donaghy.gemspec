@@ -15,6 +15,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "celluloid", "~> 0.15"
   gem.add_dependency "hashie"
   gem.add_dependency "configliere"
+  gem.add_dependency "connection_pool"
   gem.add_dependency "activesupport", ">= 3.0.0"
   gem.add_dependency "commander", "~> 4.1.0"
 
