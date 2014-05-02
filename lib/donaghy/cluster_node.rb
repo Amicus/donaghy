@@ -94,7 +94,11 @@ module Donaghy
       Timeout.timeout(seconds + 10) do
         logger.info('waiting for managers to stop')
         futures.each do |future|
-          future.value
+          begin
+            future.value
+          rescue Celluloid::Task::TerminatedError # we don't care if the job was already terminated
+          rescue Celluloid::DeadActorError # also don't care if that actor is already dead
+          end
         end
       end
 
