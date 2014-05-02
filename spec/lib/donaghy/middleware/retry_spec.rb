@@ -57,6 +57,12 @@ module Donaghy
         expect { event_handler.handle(event) }.to raise_error(StandardError)
       end
 
+      it "sets the generated at" do
+        time = Time.now
+        expect(Time).to receive(:now).any_number_of_times.and_return(time)
+        expect { event_handler.handle(event) rescue nil }.to change { event.generated_at }.to(time)
+      end
+
 
     end
 
