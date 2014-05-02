@@ -12,6 +12,9 @@ module Donaghy
         if event.retry_count > MAX_RETRY_ATTEMPTS
           logger.error("event #{event.id} failed over #{MAX_RETRY_ATTEMPTS} times")
           event.acknowledge
+        elsif event.retry_count > 2 and Donaghy.storage.member_of?('kill_list', event.id)
+          logger.error("event #{event.id} was killed due to a kill_list entry")
+          event.acknowledge
         else
           Donaghy.storage.inc('retry', 1)
           event.requeue(delay: delay(event))
