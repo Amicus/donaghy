@@ -34,8 +34,7 @@ module Donaghy
       end
 
       it "incs the retry count on the event" do
-        expect { event_handler.handle(event) }.to raise_error(StandardError)
-        expect(event.retry_count).to eq(1)
+        expect { event_handler.handle(event) rescue nil }.to change { event.retry_count }.from(0).to(1)
       end
 
       it "acknowledges the event if it has reached the maximum number of retries" do
