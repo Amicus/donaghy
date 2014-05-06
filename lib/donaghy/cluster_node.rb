@@ -104,10 +104,10 @@ module Donaghy
 
       logger.debug('completely stopping cluster node with terminate')
       signal(:stopped)
-      terminate
+      terminate if current_actor.alive?
       true
     rescue Timeout::Error
-      terminate
+      terminate if current_actor.alive?
     end
 
     def update_local_events
