@@ -26,15 +26,15 @@ module Donaghy
         if evt
           logger.debug("#{manager_name} fetcher received evt #{evt.id}(#{evt.path})")
           evt.received_on = queue
-          manager.async.handle_event(evt)
+          manager.async.handle_event(evt) unless done?
         else
-          after(0) { fetch } unless done?
+          async.fetch unless done?
         end
       end
     end
 
     def done?
-      !manager.alive? or @stopped
+      @stopped or !manager.alive?
     end
 
     def cleanup

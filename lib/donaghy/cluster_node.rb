@@ -23,10 +23,10 @@ module Donaghy
     end
 
     def start
-      logger.debug('cluster node starting up')
+      logger.info('ClusterNode starting up')
       @stop_requested = false
       load_classes_and_subscribe_to_events
-      logger.debug("starting cluster manager and local manager on #{Donaghy.default_queue.name}")
+      logger.debug("ClusterNode starting cluster manager and local manager on #{Donaghy.default_queue.name}")
       futures = [
           @cluster_manager.future.start,
           @local_manager.future.start
@@ -36,7 +36,7 @@ module Donaghy
         update_local_events
       end
       futures.each(&:value)
-      logger.debug("cluster node started both cluster and local managers")
+      logger.info("ClusterNode started both cluster and local managers")
       signal(:started)
     end
 
@@ -46,13 +46,13 @@ module Donaghy
     end
 
     def handle_sidekiq_services
-      logger.debug('subscribing to sidekiq services')
+      logger.debug('ClusterNode subscribing to sidekiq services')
       SidekiqRunner.receives("#{Donaghy.root_event_path}/#{Service::SIDEKIQ_EVENT_PREFIX}.*", :handle_perform)
       SidekiqRunner.subscribe_to_global_events
     end
 
     def load_classes_and_subscribe_to_events
-      logger.debug("subscribing to donaghy services and configured services: #{(donaghy_services + configured_services).inspect}")
+      logger.debug("ClusterNode subscribing to donaghy services and configured services: #{(donaghy_services + configured_services).inspect}")
       (donaghy_services + configured_services).each do |klass|
         klass.subscribe_to_global_events
       end
@@ -83,36 +83,41 @@ module Donaghy
     end
 
     def stop(seconds = 0)
-      logger.info('stopping cluster node')
       @stop_requested = true
-      listener_updater_supervisor.terminate if listener_updater_supervisor.alive?
-      signal(:stop_requested)
-      futures = [@cluster_manager, @local_manager].select(&:alive?).map do |manager|
+      logger.info('ClusterNode stopping')
+
+      listener_updater_supervisor.async.terminate if listener_updater_supervisor.alive?
+      futures = [@local_manager, @cluster_manager].select(&:alive?).map do |manager|
+        logger.info("ClusterNode stopping #{manager.name}")
         manager.future.stop(seconds)
       end
 
-      Timeout.timeout(seconds + 10) do
-        logger.info('waiting for managers to stop')
+      timeout(seconds + 10) do
+        logger.info('ClusterNode waiting for managers to stop')
         futures.each do |future|
           begin
             future.value
           rescue Celluloid::Task::TerminatedError # we don't care if the job was already terminated
           rescue Celluloid::DeadActorError # also don't care if that actor is already dead
+          rescue Task::TimeoutError
+            logger.error("ClusterNode Timeout error from manager stop")
           end
         end
       end
 
-      logger.debug('completely stopping cluster node with terminate')
+      logger.info('ClusterNode stopped')
       signal(:stopped)
       terminate if current_actor.alive?
       true
-    rescue Timeout::Error
+    rescue Task::TimeoutError
+      logger.error("ClusterNode timeout error from double manager shutdown")
       terminate if current_actor.alive?
     end
 
     def update_local_events
-      if listener_updater_supervisor.alive? and !@stop_requested
-        listener_updater_supervisor.actors.first.update_local_event_paths
+      if listener_updater_supervisor.alive? and !@stop_requested and current_actor.alive?
+        actor = listener_updater_supervisor.actors.first
+        actor.async.update_local_event_paths if actor.alive?
       end
     end
 
