@@ -1,4 +1,5 @@
 require 'logger'
+FileUtils.mkdir_p('tmp')
 LOGGER = Logger.new('tmp/test.log')
 
 RSpec.configure do |config|
