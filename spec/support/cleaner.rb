@@ -1,9 +1,14 @@
+require 'logger'
+LOGGER = Logger.new('tmp/test.log')
+
 RSpec.configure do |config|
   config.before do
     Donaghy.logger.info('storage flush')
     Donaghy.storage.flush
     Donaghy.reset
     Donaghy.configuration = {config_file: "spec/support/test_config.yml" }
+
+    Donaghy.logger = LOGGER
 
     if Donaghy.configuration[:storage] == :sqs
       while Donaghy.root_queue.length > 0
