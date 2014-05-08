@@ -3,7 +3,7 @@ require 'spec_helper'
 module Donaghy
   describe EventHandler do
     let(:mock_async) { mock(:real_manager, event_handler_finished: true) }
-    let(:mock_manager) { mock(:async_manager, async: mock_async, name: "test_mocked_manager") }
+    let(:mock_manager) { mock(:async_manager, alive?: true, async: mock_async, name: "test_mocked_manager") }
 
     let(:handler) { EventHandler.new(mock_manager) }
 

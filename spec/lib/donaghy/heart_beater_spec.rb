@@ -23,11 +23,5 @@ module Donaghy
       beater.beat
     end
 
-    it "should set the timer" do
-      beater.timer.should be_nil
-      beater.beat
-      beater.timer.should_not be_nil
-      beater.timer.interval.should == timeout
-    end
   end
 end
