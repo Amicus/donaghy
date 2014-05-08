@@ -194,6 +194,11 @@ module Donaghy
     @configuration = @storage = @local_storage = @message_queue = @logger = @event_publisher = @middleware = nil
   end
 
+  at_exit do
+    message_queue.disconnect if message_queue.respond_to?(:disconnect)
+    storage.disconnect if storage.respond_to?(:disconnect)
+  end
+
 end
 
 $: << File.dirname(__FILE__)

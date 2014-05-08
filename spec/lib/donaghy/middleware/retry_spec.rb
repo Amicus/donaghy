@@ -26,7 +26,7 @@ module Donaghy
       end
 
       after do
-        event_handler.terminate if event_handler.alive?
+        event_handler.async.terminate if event_handler.alive?
       end
 
       before do
