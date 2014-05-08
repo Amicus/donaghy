@@ -37,59 +37,30 @@ module Donaghy
       true
     end
 
-    def new_fetcher
-      Fetcher.new(current_actor, queue, {manager_name: name})
-    end
-
-    def new_event_handler
-      EventHandler.new_link(current_actor, only_distribute: only_distribute)
-    end
-
-    def stop(seconds = 0)
-      logger.info("manager #{name} is being asked to stop in #{seconds} seconds")
+    def stop(seconds=0)
       @stopped = true
-      async.internal_stop(seconds)
-      if current_actor.alive?
-        Timeout.timeout(seconds+10) do
-          wait(:actually_stopped)
-        end
-      end
-      logger.info("manager #{name} received actually stopped so we are terminating")
-      terminate
-      true
-    rescue Timeout::Error
-      terminate
-    end
-
-    def internal_stop(seconds=0)
       logger.info("manager #{name} stopping the fetcher")
-      fetcher.terminate if fetcher.alive?
-
-      logger.info("manager #{name} stopping the beater")
-      beater.terminate if beater.alive?
+      fetcher.async.terminate if fetcher.alive?
 
       logger.info("manager #{name} terminating #{available.count} handlers")
       available.each do |handler|
-        handler.terminate if handler.alive?
+        handler.async.terminate if handler.alive?
       end
-      if busy.empty?
-        logger.debug("manager #{name} busy empty, signaling actually stopped")
-        signal(:actually_stopped)
-      else
+      unless busy.empty?
         after(seconds) do
           logger.warn("manager #{name} shutting down #{busy.count} still busy handlers")
           busy.each do |busy_handler|
             events_in_progress[busy_handler.object_id].requeue
+            busy_handler.async.terminate #give it a chance to cleanup
+            Celluloid::Actor.kill(busy_handler) #but then nuke it
             remove_in_progress(busy_handler)
-            busy_handler.terminate
           end
           Donaghy.event_publisher.root_trigger("donaghy_cluster/manager.stopped", payload: {name: name, fqdn: Donaghy.hostname})
-          signal(:actually_stopped)
         end
       end
-    rescue Exception => e
-      logger.error("manager #{name} error shutting down: #{e.inspect}")
-      signal(:actually_stopped)
+    ensure
+      logger.info("manager #{name} stopping the beater")
+      beater.async.terminate if beater.alive?
     end
 
     def stopped?
@@ -97,6 +68,14 @@ module Donaghy
     end
 
   # private to the developer, but not to handlers, etc so can't use private here
+
+    def new_fetcher
+      Fetcher.new(current_actor, queue, {manager_name: name})
+    end
+
+    def new_event_handler
+      EventHandler.new_link(current_actor, only_distribute: only_distribute)
+    end
 
     def event_handler_died(event_handler, reason)
       logger.warn("Event handler died due to #{reason.inspect}") if reason
@@ -112,7 +91,7 @@ module Donaghy
       @busy.delete(event_handler)
       remove_in_progress(event_handler)
       if stopped?
-        event_handler.terminate
+        event_handler.terminate if event_handler.alive?
       else
         if event_handler.alive?
           @available << event_handler
